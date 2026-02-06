@@ -370,11 +370,11 @@ npm run seed
 - [ ] CDN integration
 - [ ] Load balancing
 
-### Phase 4: Decentralization
-- [ ] ATProto integration
-- [ ] Federation support
-- [ ] Self-hosting guides
-- [ ] Data export
+### Phase 4: Decentralization ✅
+- [x] ATProto integration
+- [x] Federation support
+- [x] Self-hosting guides
+- [x] Data export
 
 ### Phase 5: Mobile
 - [ ] React Native app
