@@ -356,12 +356,12 @@ npm run seed
 - [x] Communities
 - [x] Profiles & avatars
 
-### Phase 2: Features
-- [ ] Posts and comments
-- [ ] Moderation tools
-- [ ] User reports
-- [ ] Admin dashboard
-- [ ] Email notifications
+### Phase 2: Features ✅
+- [x] Posts and comments
+- [x] Moderation tools
+- [x] User reports
+- [x] Admin dashboard
+- [x] Email notifications
 
 ### Phase 3: Scaling
 - [ ] Caching (Redis)
