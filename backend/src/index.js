@@ -13,11 +13,13 @@ const postRoutes = require('./routes/posts');
 const moderationRoutes = require('./routes/moderation');
 const adminRoutes = require('./routes/admin');
 const monitoringRoutes = require('./routes/monitoring');
+const federationRoutes = require('./routes/federation');
 const { errorHandler } = require('./middleware/errorHandler');
 const { connectDB } = require('./db/connection');
 const { initializeEmailService } = require('./services/emailService');
 const { initializeCache } = require('./services/cacheService');
 const monitoringService = require('./services/monitoringService');
+const atprotoService = require('./services/atprotoService');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -62,6 +64,7 @@ app.use('/api/posts', postRoutes);
 app.use('/api/moderation', moderationRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/monitoring', monitoringRoutes);
+app.use('/api/federation', federationRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ error: 'Route not found' });
@@ -79,6 +82,9 @@ const startServer = async () => {
 
     await initializeCache();
     console.log('✓ Cache service initialized');
+
+    await atprotoService.initialize();
+    console.log('✓ ATProto service initialized');
 
     app.listen(PORT, () => {
       console.log(`✓ Server running on http://localhost:${PORT}`);

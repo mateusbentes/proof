@@ -126,6 +126,12 @@ CREATE TABLE IF NOT EXISTS reports (
 -- User roles (add to users table)
 ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(50) DEFAULT 'user';
 
+-- ATProto federation fields
+ALTER TABLE users ADD COLUMN IF NOT EXISTS atproto_did VARCHAR(255);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS atproto_handle VARCHAR(255);
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS atproto_uri VARCHAR(255);
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS is_federated BOOLEAN DEFAULT FALSE;
+
 -- Create indexes
 CREATE INDEX idx_users_username ON users(username);
 CREATE INDEX idx_users_email ON users(email);
