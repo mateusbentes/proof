@@ -14,12 +14,15 @@ const moderationRoutes = require('./routes/moderation');
 const adminRoutes = require('./routes/admin');
 const monitoringRoutes = require('./routes/monitoring');
 const federationRoutes = require('./routes/federation');
+const infrastructureRoutes = require('./routes/infrastructure');
 const { errorHandler } = require('./middleware/errorHandler');
 const { connectDB } = require('./db/connection');
 const { initializeEmailService } = require('./services/emailService');
 const { initializeCache } = require('./services/cacheService');
 const monitoringService = require('./services/monitoringService');
 const atprotoService = require('./services/atprotoService');
+const cdnService = require('./services/cdnService');
+const loadBalancerService = require('./services/loadBalancerService');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -65,6 +68,7 @@ app.use('/api/moderation', moderationRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/monitoring', monitoringRoutes);
 app.use('/api/federation', federationRoutes);
+app.use('/api/infrastructure', infrastructureRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ error: 'Route not found' });
@@ -85,6 +89,15 @@ const startServer = async () => {
 
     await atprotoService.initialize();
     console.log('✓ ATProto service initialized');
+
+    await cdnService.initialize();
+    console.log('✓ CDN service initialized');
+
+    const servers = (process.env.LOAD_BALANCER_SERVERS || '').split(',').filter(s => s.trim());
+    if (servers.length > 0) {
+      await loadBalancerService.initialize(servers);
+      console.log('✓ Load balancer initialized');
+    }
 
     app.listen(PORT, () => {
       console.log(`✓ Server running on http://localhost:${PORT}`);
