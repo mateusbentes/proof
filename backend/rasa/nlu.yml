@@ -1,0 +1,91 @@
+version: "3.1"
+
+nlu:
+- intent: greet
+  examples: |
+    - hey
+    - hello
+    - hi
+    - good morning
+    - good evening
+    - moin
+
+- intent: goodbye
+  examples: |
+    - bye
+    - goodbye
+    - see you around
+    - see you later
+
+- intent: affirm
+  examples: |
+    - yes
+    - indeed
+    - of course
+    - that sounds good
+    - correct
+
+- intent: deny
+  examples: |
+    - no
+    - never
+    - I don't think so
+    - don't like that
+    - no way
+
+- intent: mood_great
+  examples: |
+    - great
+    - super stoked
+    - extremely good
+    - so good
+    - so perfect
+
+- intent: mood_unhappy
+  examples: |
+    - sad
+    - very sad
+    - unhappy
+    - bad
+    - terrible
+
+- intent: bot_challenge
+  examples: |
+    - are you a bot?
+    - are you human?
+    - am I talking to a bot?
+    - am I talking to a human?
+
+- intent: open_source_experience
+  examples: |
+    - I contributed to Linux kernel
+    - I use open source tools daily
+    - I maintain a GitHub project
+    - I forked a repository and improved it
+    - I've been using open source for years
+    - I set up a Nextcloud server
+    - I migrated to Tutanota for privacy
+    - I use Bluesky instead of Twitter
+    - I self-host my own services
+    - I believe in software freedom
+
+- intent: modding_experience
+  examples: |
+    - I created mods for Mount and Blade
+    - I've modded Skyrim extensively
+    - I balance game mechanics in mods
+    - I test mods with friends
+    - I contribute to modding communities
+    - I've been modding for years
+    - I understand game balance
+    - I create historical content mods
+
+- intent: privacy_concern
+  examples: |
+    - I care about data privacy
+    - I avoid US-based services
+    - I want data sovereignty
+    - I use VPN always
+    - I encrypt my communications
+    - I don't trust big tech
+    - I value my digital rights

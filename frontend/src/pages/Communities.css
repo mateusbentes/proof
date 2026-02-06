@@ -1,0 +1,224 @@
+.communities-page {
+  padding: 20px 0;
+}
+
+.communities-header {
+  margin-bottom: 40px;
+}
+
+.communities-header h1 {
+  font-size: 36px;
+  margin-bottom: 10px;
+}
+
+.communities-header p {
+  color: #666;
+  font-size: 16px;
+  margin-bottom: 20px;
+}
+
+.btn-create {
+  padding: 10px 20px;
+  background-color: #0066cc;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-create:hover {
+  background-color: #0052a3;
+  transform: translateY(-2px);
+}
+
+.create-community-form {
+  background: white;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 40px;
+}
+
+.create-community-form h2 {
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+.create-community-form .form-group {
+  margin-bottom: 20px;
+}
+
+.create-community-form label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.create-community-form input,
+.create-community-form textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.create-community-form input:focus,
+.create-community-form textarea:focus {
+  outline: none;
+  border-color: #0066cc;
+  box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+}
+
+.create-community-form .form-group.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.create-community-form .form-group.checkbox input {
+  width: auto;
+  margin: 0;
+}
+
+.create-community-form .form-group.checkbox label {
+  margin: 0;
+}
+
+.create-community-form .btn-submit {
+  padding: 12px 30px;
+  background-color: #0066cc;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.create-community-form .btn-submit:hover {
+  background-color: #0052a3;
+  transform: translateY(-2px);
+}
+
+.communities-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.community-card {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.community-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+.community-icon {
+  width: 60px;
+  height: 60px;
+  margin-bottom: 15px;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #f0f0f0;
+}
+
+.community-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.icon-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.community-card h3 {
+  font-size: 20px;
+  margin-bottom: 5px;
+}
+
+.community-slug {
+  color: #999;
+  font-size: 12px;
+  margin-bottom: 10px;
+}
+
+.community-description {
+  color: #666;
+  font-size: 14px;
+  line-height: 1.5;
+  margin-bottom: 15px;
+  flex: 1;
+}
+
+.community-meta {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+  font-size: 12px;
+  color: #999;
+}
+
+.member-count {
+  display: flex;
+  align-items: center;
+}
+
+.btn-join {
+  padding: 10px;
+  background-color: #0066cc;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-join:hover {
+  background-color: #0052a3;
+}
+
+.no-communities {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: #999;
+  padding: 40px;
+  font-size: 16px;
+}
+
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+}
+
+@media (max-width: 768px) {
+  .communities-header h1 {
+    font-size: 28px;
+  }
+
+  .communities-grid {
+    grid-template-columns: 1fr;
+  }
+}

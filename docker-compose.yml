@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: proof_postgres
+    environment:
+      POSTGRES_USER: proof_user
+      POSTGRES_PASSWORD: proof_password
+      POSTGRES_DB: proof_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U proof_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: proof_backend
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://proof_user:proof_password@postgres:5432/proof_db
+      JWT_SECRET: your_jwt_secret_key_change_in_production
+      PORT: 3001
+      RASA_URL: http://rasa:5005
+    ports:
+      - "3001:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    command: sh -c "npm install && npm run dev"
+
+  rasa:
+    image: rasa/rasa:3.5.0
+    container_name: proof_rasa
+    ports:
+      - "5005:5005"
+    volumes:
+      - ./backend/rasa:/app
+    command: run --enable-api --cors "*"
+    environment:
+      RASA_NLU_FALLBACK_THRESHOLD: 0.3
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: proof_frontend
+    environment:
+      REACT_APP_API_URL: http://localhost:3001
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: sh -c "npm install && npm start"
+
+volumes:
+  postgres_data:

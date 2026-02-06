@@ -1,0 +1,42 @@
+version: "3.1"
+
+intents:
+  - greet
+  - goodbye
+  - affirm
+  - deny
+  - mood_great
+  - mood_unhappy
+  - bot_challenge
+  - open_source_experience
+  - modding_experience
+  - privacy_concern
+  - nlu_fallback
+
+actions:
+  - action_listen
+  - action_default_fallback
+
+responses:
+  utter_greet:
+    - text: "Hey! How are you doing?"
+
+  utter_goodbye:
+    - text: "Bye!"
+
+  utter_iamabot:
+    - text: "I am a bot, powered by Rasa."
+
+  utter_default:
+    - text: "I'm not sure I understand. Could you rephrase that?"
+
+rules:
+  - rule: Say goodbye anytime the user says goodbye
+    steps:
+      - intent: goodbye
+      - action: utter_goodbye
+
+  - rule: Say 'I am a bot' anytime the user challenges
+    steps:
+      - intent: bot_challenge
+      - action: utter_iamabot
