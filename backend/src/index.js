@@ -15,6 +15,7 @@ const adminRoutes = require('./routes/admin');
 const monitoringRoutes = require('./routes/monitoring');
 const federationRoutes = require('./routes/federation');
 const infrastructureRoutes = require('./routes/infrastructure');
+const botRoutes = require('./routes/bots');
 const { errorHandler } = require('./middleware/errorHandler');
 const { connectDB } = require('./db/connection');
 const { initializeEmailService } = require('./services/emailService');
@@ -69,6 +70,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/monitoring', monitoringRoutes);
 app.use('/api/federation', federationRoutes);
 app.use('/api/infrastructure', infrastructureRoutes);
+app.use('/api/bots', botRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ error: 'Route not found' });
