@@ -8,11 +8,6 @@ function ChatThreadsList() {
   const [bots, setBots] = useState([]);
   const [botsLoading, setBotsLoading] = useState(false);
 
-  useEffect(() => {
-    loadThreads();
-    loadBots();
-  }, [loadThreads]);
-
   const loadBots = async () => {
     setBotsLoading(true);
     try {
@@ -24,6 +19,11 @@ function ChatThreadsList() {
       setBotsLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadThreads();
+    loadBots();
+  }, [loadThreads]);
 
   const handleBotClick = (bot) => {
     const botThread = {
