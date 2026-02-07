@@ -201,13 +201,5 @@ VALUES
     '🤖',
     '{"model": "mistral-7b", "temperature": 0.7, "max_tokens": 1024}',
     true
-  ),
-  (
-    'Assistant',
-    'custom',
-    'General purpose assistant',
-    '🧠',
-    '{"type": "keyword_based"}',
-    true
   )
 ON CONFLICT (name) DO NOTHING;

@@ -97,8 +97,7 @@ Updated to display:
 ```
 Messages
 ├─ Bots
-│  ├─ 🤖 Mistral
-│  └─ 🧠 Assistant
+│  └─ 🤖 Mistral
 │
 └─ Conversations
    ├─ User 1
@@ -117,19 +116,13 @@ Beautiful chat interface for bot conversations:
 
 ## Default Bots
 
-Two default bots are created on database initialization:
+One default bot is created on database initialization:
 
-### 1. Mistral
+### Mistral
 - **Type**: `mistral`
 - **Avatar**: 🤖
 - **Description**: Mistral AI - Open source language model
 - **Config**: `{"model": "mistral-7b", "temperature": 0.7, "max_tokens": 1024}`
-
-### 2. Assistant
-- **Type**: `custom`
-- **Avatar**: 🧠
-- **Description**: General purpose assistant
-- **Config**: `{"type": "keyword_based"}`
 
 ## User Flow
 
@@ -143,8 +136,7 @@ Landing → Chat Interface (for login/register/account setup)
 Home (Social Feed)
 ├─ Chat Page
 │  ├─ Bots Section
-│  │  ├─ Click Mistral → BotChat Interface
-│  │  └─ Click Assistant → BotChat Interface
+│  │  └─ Click Mistral → BotChat Interface
 │  │
 │  └─ Conversations Section
 │     ├─ User 1 → User-to-User Chat
