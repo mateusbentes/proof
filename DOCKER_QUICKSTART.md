@@ -87,7 +87,16 @@ docker-compose ps
 # proof-frontend      Up (healthy)
 ```
 
-### 5. Visit the Application
+### 5. Verify Database is Running
+
+```bash
+# Check PostgreSQL is healthy
+docker-compose ps postgres
+
+# Should show: proof-postgres ... Up (healthy)
+```
+
+### 6. Visit the Application
 Open http://localhost:3000 in your browser
 
 ---
@@ -188,6 +197,58 @@ services:
         reservations:
           cpus: '2'
           memory: 8G
+```
+
+---
+
+## 🗄️ Database
+
+### PostgreSQL Configuration
+
+The database is automatically configured with:
+- **Host**: postgres
+- **Port**: 5432
+- **Database**: proof_db
+- **User**: proof
+- **Password**: proof_password
+
+### Connect to Database
+
+```bash
+# From inside backend container
+docker-compose exec backend psql -h postgres -U proof -d proof_db
+
+# From your machine
+psql -h localhost -U proof -d proof_db
+```
+
+### Database Commands
+
+```bash
+# View all databases
+docker-compose exec postgres psql -U proof -l
+
+# View tables
+docker-compose exec postgres psql -U proof -d proof_db -c "\dt"
+
+# Backup database
+docker-compose exec postgres pg_dump -U proof proof_db > backup.sql
+
+# Restore database
+docker-compose exec -T postgres psql -U proof proof_db < backup.sql
+```
+
+### Reset Database
+
+```bash
+# Stop services
+docker-compose down
+
+# Remove database volume
+docker volume rm proof_postgres_data
+
+# Start again
+docker-compose up -d
 ```
 
 ---

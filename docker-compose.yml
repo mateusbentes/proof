@@ -1,6 +1,25 @@
 version: '3.8'
 
 services:
+  # PostgreSQL - Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: proof-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=proof
+      - POSTGRES_PASSWORD=proof_password
+      - POSTGRES_DB=proof_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U proof"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   # Ollama - Local AI Model Server
   ollama:
     image: ollama/ollama:latest
@@ -32,8 +51,15 @@ services:
       - OLLAMA_MODEL=mistral
       - API_URL=http://localhost:3001/api
       - NODE_ENV=production
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=proof_db
+      - DB_USER=proof
+      - DB_PASSWORD=proof_password
     depends_on:
       ollama:
+        condition: service_healthy
+      postgres:
         condition: service_healthy
     restart: unless-stopped
     healthcheck:
@@ -58,5 +84,7 @@ services:
     restart: unless-stopped
 
 volumes:
+  postgres_data:
+    driver: local
   ollama_data:
     driver: local

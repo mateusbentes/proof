@@ -192,6 +192,17 @@ npm start
 version: '3.8'
 
 services:
+  postgres:
+    image: postgres:15-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=proof
+      - POSTGRES_PASSWORD=proof_password
+      - POSTGRES_DB=proof_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
   ollama:
     image: ollama/ollama:latest
     ports:
@@ -247,12 +258,12 @@ API_URL=http://localhost:3001/api
 NODE_ENV=development
 PORT=3001
 
-# Database (if using)
+# Database Configuration
 DB_HOST=localhost
 DB_PORT=5432
-DB_NAME=proof
-DB_USER=postgres
-DB_PASSWORD=password
+DB_NAME=proof_db
+DB_USER=proof
+DB_PASSWORD=proof_password
 ```
 
 **Frontend (.env)**
@@ -445,7 +456,84 @@ docker push gcr.io/<project>/proof-backend:latest
 
 ---
 
+## Database
+
+### PostgreSQL Setup
+
+The platform uses PostgreSQL for data storage:
+
+**Configuration:**
+- Host: localhost (or postgres in Docker)
+- Port: 5432
+- Database: proof_db
+- User: proof
+- Password: proof_password
+
+**Connect to Database:**
+```bash
+# Local
+psql -h localhost -U proof -d proof_db
+
+# Docker
+docker-compose exec postgres psql -U proof -d proof_db
+```
+
+**Database Commands:**
+```bash
+# List databases
+psql -h localhost -U proof -l
+
+# List tables
+psql -h localhost -U proof -d proof_db -c "\dt"
+
+# Backup
+pg_dump -h localhost -U proof proof_db > backup.sql
+
+# Restore
+psql -h localhost -U proof proof_db < backup.sql
+```
+
+**Reset Database:**
+```bash
+# Stop services
+docker-compose down
+
+# Remove volume
+docker volume rm proof_postgres_data
+
+# Start again
+docker-compose up -d
+```
+
+---
+
 ## Troubleshooting
+
+### PostgreSQL Not Running
+
+```bash
+# Check if service is running
+docker-compose ps postgres
+
+# Check logs
+docker-compose logs postgres
+
+# Restart
+docker-compose restart postgres
+```
+
+### Database Connection Error
+
+```bash
+# Verify database is healthy
+docker-compose ps postgres
+
+# Check environment variables
+docker-compose exec backend env | grep DB_
+
+# Test connection
+docker-compose exec backend psql -h postgres -U proof -d proof_db -c "SELECT 1"
+```
 
 ### Ollama Not Running
 
