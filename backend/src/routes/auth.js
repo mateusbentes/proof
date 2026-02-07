@@ -50,10 +50,17 @@ router.post('/register', asyncHandler(async (req, res) => {
     [userId, sessionId, 'active'],
   );
 
+  const token = generateToken(userId, username);
+
   res.status(201).json({
-    message: 'User registered. Start conversational authentication.',
+    message: 'User registered successfully',
+    token,
+    user: {
+      id: userId,
+      username,
+      email,
+    },
     sessionId,
-    userId,
   });
 }));
 

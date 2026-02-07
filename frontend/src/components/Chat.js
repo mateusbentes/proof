@@ -67,20 +67,37 @@ const Chat = () => {
           };
           setMessages(prev => [...prev, response]);
           
-          // Create account
-          const userData = {
-            username: tempUser.username,
-            userId: `user-${Date.now()}`,
-            joined: new Date().toLocaleDateString()
-          };
-          const newToken = `token-${Date.now()}`;
-          
-          setAuthUser(userData);
-          setToken(newToken);
-          setAuthStep('complete');
-          
-          // Redirect after 2 seconds
-          setTimeout(() => navigate('/'), 2000);
+          try {
+            // Call backend to create account and get JWT token
+            const authResponse = await apiClient.post('/auth/register', {
+              username: tempUser.username,
+              password: userInput,
+              email: `${tempUser.username}@proof.local`
+            });
+            
+            const userData = {
+              username: authResponse.data.user.username,
+              userId: authResponse.data.user.id,
+              joined: new Date().toLocaleDateString()
+            };
+            const newToken = authResponse.data.token;
+            
+            setAuthUser(userData);
+            setToken(newToken);
+            setAuthStep('complete');
+            
+            // Redirect after 2 seconds
+            setTimeout(() => navigate('/'), 2000);
+          } catch (error) {
+            console.error('Registration error:', error);
+            const errorMsg = {
+              role: 'bot',
+              content: 'Sorry, there was an error creating your account. Please try again.',
+              timestamp: new Date()
+            };
+            setMessages(prev => [...prev, errorMsg]);
+            setAuthStep('password');
+          }
         }
       } else {
         // User is authenticated, send to Mistral bot
