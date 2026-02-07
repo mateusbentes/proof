@@ -60,6 +60,14 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+app.get('/api/local-ai/status', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    running: true,
+    timestamp: new Date().toISOString() 
+  });
+});
+
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/communities', communityRoutes);
