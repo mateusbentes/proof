@@ -2,7 +2,7 @@
 
 Proof is dual-licensed to provide flexibility for different use cases, similar to Bluesky's licensing approach.
 
-## Frontend (Client Code) - MIT License
+## Client Code - MIT License
 
 ```
 MIT License
@@ -28,11 +28,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Frontend License Applies To:
-- `frontend/` directory
-- React components
-- Client-side code
+### MIT License Applies To:
+- `frontend/` directory (React web app)
+- `mobile/android/` directory (Android app)
+- `mobile/ios/` directory (iOS app)
+- All client-side code
 - UI/UX implementations
+- Mobile applications
 
 ---
 

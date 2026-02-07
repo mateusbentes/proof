@@ -198,10 +198,19 @@ docker-compose restart <service-name>
 - **Models**: https://ollama.ai/library
 - **Rasa**: https://rasa.com
 
+## 📱 Mobile Apps
+
+Native applications for iOS and Android:
+
+- **Android App** (Kotlin) - MIT License
+- **iOS App** (Swift) - MIT License
+
+See [MOBILE_APPS.md](./MOBILE_APPS.md) for development guide.
+
 ## 📄 License
 
 Dual Licensed:
-- **Client Code** (Frontend): MIT License
+- **Client Code** (Frontend, Android, iOS): MIT License
 - **Server Code** (Backend): Apache 2.0 License
 
 This dual-licensing approach, similar to Bluesky, allows:
