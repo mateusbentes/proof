@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const { executeCommand, parseCommand } = require('../services/chatCommandService');
-const auth = require('../middleware/auth');
+const { verifyToken } = require('../middleware/auth');
 
 // POST /api/chat/command - Handle chat commands
-router.post('/command', auth, async (req, res) => {
+router.post('/command', verifyToken, async (req, res) => {
   try {
     const { message } = req.body;
     

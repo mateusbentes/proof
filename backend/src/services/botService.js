@@ -1,329 +1,147 @@
-const axios = require('axios');
 const { query } = require('../db/connection');
-const { generateToken } = require('../middleware/auth');
-const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
 
 class BotService {
-  constructor() {
-    this.apiUrl = process.env.API_URL || 'http://localhost:3001/api';
-    this.client = axios.create({
-      baseURL: this.apiUrl,
-      validateStatus: () => true,
-    });
-    this.botAccounts = [];
+  // Get all active bots
+  async getActiveBots() {
+    const result = await query(
+      'SELECT id, name, type, description, avatar, config FROM bots WHERE is_active = true ORDER BY name'
+    );
+    return result.rows;
   }
 
-  async createBotAccount(botConfig) {
-    try {
-      const {
-        username,
-        email,
-        password,
-        displayName,
-        bio,
-        avatarPrompt,
-      } = botConfig;
+  // Get bot by ID
+  async getBotById(botId) {
+    const result = await query(
+      'SELECT id, name, type, description, avatar, config FROM bots WHERE id = $1',
+      [botId]
+    );
+    return result.rows[0] || null;
+  }
 
-      // Register bot account
-      const registerResponse = await this.client.post('/auth/register', {
-        username,
-        email,
-        password,
-      });
+  // Get or create bot conversation
+  async getOrCreateConversation(botId, userId) {
+    let result = await query(
+      'SELECT id FROM bot_conversations WHERE bot_id = $1 AND user_id = $2',
+      [botId, userId]
+    );
 
-      if (registerResponse.status !== 201) {
-        throw new Error(`Registration failed: ${registerResponse.data.error}`);
-      }
+    if (result.rows.length > 0) {
+      return result.rows[0].id;
+    }
 
-      const { userId, sessionId } = registerResponse.data;
+    const conversationId = uuidv4();
+    await query(
+      'INSERT INTO bot_conversations (id, bot_id, user_id) VALUES ($1, $2, $3)',
+      [conversationId, botId, userId]
+    );
+    return conversationId;
+  }
 
-      // Complete conversational authentication
-      await this.completeConversationalAuth(sessionId);
+  // Get conversation messages
+  async getConversationMessages(conversationId, limit = 50, offset = 0) {
+    const result = await query(
+      `SELECT id, sender_type, content, created_at FROM bot_messages 
+       WHERE conversation_id = $1 
+       ORDER BY created_at DESC 
+       LIMIT $2 OFFSET $3`,
+      [conversationId, limit, offset]
+    );
+    return result.rows.reverse();
+  }
 
-      // Update profile
-      const token = generateToken(userId, username);
-      await this.client.put(
-        `/users/${userId}/profile`,
-        {
-          displayName,
-          bio,
-          avatarPrompt,
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
+  // Add message to conversation
+  async addMessage(conversationId, senderType, content, metadata = {}) {
+    const messageId = uuidv4();
+    await query(
+      `INSERT INTO bot_messages (id, conversation_id, sender_type, content, metadata) 
+       VALUES ($1, $2, $3, $4, $5)`,
+      [messageId, conversationId, senderType, content, JSON.stringify(metadata)]
+    );
+    return {
+      id: messageId,
+      sender_type: senderType,
+      content,
+      created_at: new Date().toISOString(),
+    };
+  }
 
-      // Generate avatar
-      await this.client.post(
-        `/users/${userId}/avatar`,
-        { prompt: avatarPrompt },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
-
-      const botAccount = {
-        userId,
-        username,
-        email,
-        password,
-        token,
-        createdAt: new Date(),
-      };
-
-      this.botAccounts.push(botAccount);
-
-      console.log(`✓ Bot account created: ${username}`);
-      return botAccount;
-    } catch (error) {
-      console.error('Failed to create bot account:', error.message);
-      throw error;
+  // Get bot response based on type
+  async getBotResponse(bot, userMessage) {
+    switch (bot.type) {
+      case 'mistral':
+        return await this.getMistralResponse(bot, userMessage);
+      case 'openai':
+        return await this.getOpenAIResponse(bot, userMessage);
+      case 'custom':
+      default:
+        return this.getCustomResponse(bot, userMessage);
     }
   }
 
-  async completeConversationalAuth(sessionId) {
+  // Mistral AI response
+  async getMistralResponse(bot, userMessage) {
     try {
-      const responses = [
-        'I am passionate about open-source software and have been contributing to various projects for years. I believe in the power of community-driven development.',
-        'I have contributed to several open-source projects including Linux kernel patches and maintained a popular GitHub repository. I also self-host my own services for data sovereignty.',
-        'I would like my avatar to be a combination of a developer hat with a Linux penguin logo, representing my passion for open-source development.',
-      ];
-
-      for (const response of responses) {
-        const messageResponse = await this.client.post('/conversations/message', {
-          sessionId,
-          userMessage: response,
-        });
-
-        if (messageResponse.status !== 200) {
-          throw new Error(`Conversation failed: ${messageResponse.data.error}`);
-        }
-
-        if (messageResponse.data.status === 'completed') {
-          break;
-        }
+      // Check if Mistral API key is configured
+      if (!bot.config.api_key) {
+        return 'Mistral AI is not configured. Please add your API key.';
       }
 
-      console.log(`✓ Conversational auth completed for session: ${sessionId}`);
+      // For now, return a placeholder
+      // In production, integrate with Mistral API
+      return `Mistral response to: "${userMessage}"`;
     } catch (error) {
-      console.error('Failed to complete conversational auth:', error.message);
-      throw error;
+      console.error('Mistral error:', error);
+      return 'Sorry, I encountered an error processing your request.';
     }
   }
 
-  async loginBot(username, password) {
+  // OpenAI response
+  async getOpenAIResponse(bot, userMessage) {
     try {
-      const loginResponse = await this.client.post('/auth/login', {
-        email: `${username}@bot.proof.local`,
-        password,
-      });
-
-      if (loginResponse.status !== 200) {
-        throw new Error(`Login failed: ${loginResponse.data.error}`);
+      if (!bot.config.api_key) {
+        return 'OpenAI is not configured. Please add your API key.';
       }
 
-      const { token, user } = loginResponse.data;
-
-      console.log(`✓ Bot logged in: ${username}`);
-      return { token, user };
+      // For now, return a placeholder
+      // In production, integrate with OpenAI API
+      return `OpenAI response to: "${userMessage}"`;
     } catch (error) {
-      console.error('Failed to login bot:', error.message);
-      throw error;
+      console.error('OpenAI error:', error);
+      return 'Sorry, I encountered an error processing your request.';
     }
   }
 
-  async updateBotProfile(userId, token, profileData) {
-    try {
-      const response = await this.client.put(
-        `/users/${userId}/profile`,
-        profileData,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
+  // Custom/keyword-based response
+  getCustomResponse(bot, userMessage) {
+    const lowerMessage = userMessage.toLowerCase();
 
-      if (response.status !== 200) {
-        throw new Error(`Profile update failed: ${response.data.error}`);
-      }
-
-      console.log(`✓ Bot profile updated: ${userId}`);
-      return response.data;
-    } catch (error) {
-      console.error('Failed to update bot profile:', error.message);
-      throw error;
+    if (lowerMessage.includes('hello') || lowerMessage.includes('hi')) {
+      return 'Hello! How can I help you today?';
     }
-  }
-
-  async createBotPost(userId, token, communityId, postData) {
-    try {
-      const response = await this.client.post(
-        '/posts',
-        {
-          communityId,
-          ...postData,
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
-
-      if (response.status !== 201) {
-        throw new Error(`Post creation failed: ${response.data.error}`);
-      }
-
-      console.log(`✓ Bot post created: ${response.data.id}`);
-      return response.data;
-    } catch (error) {
-      console.error('Failed to create bot post:', error.message);
-      throw error;
+    if (lowerMessage.includes('how are you')) {
+      return "I'm doing great! Thanks for asking. How can I assist you?";
     }
-  }
-
-  async createBotComment(userId, token, postId, content) {
-    try {
-      const response = await this.client.post(
-        `/posts/${postId}/comments`,
-        { content },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
-
-      if (response.status !== 201) {
-        throw new Error(`Comment creation failed: ${response.data.error}`);
-      }
-
-      console.log(`✓ Bot comment created: ${response.data.id}`);
-      return response.data;
-    } catch (error) {
-      console.error('Failed to create bot comment:', error.message);
-      throw error;
+    if (lowerMessage.includes('what is')) {
+      return 'That\'s a great question! I\'m here to help explain things. Can you be more specific?';
     }
-  }
-
-  async joinBotCommunity(userId, token, communityId) {
-    try {
-      const response = await this.client.post(
-        `/communities/${communityId}/join`,
-        {},
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
-
-      if (response.status !== 200) {
-        throw new Error(`Join community failed: ${response.data.error}`);
-      }
-
-      console.log(`✓ Bot joined community: ${communityId}`);
-      return response.data;
-    } catch (error) {
-      console.error('Failed to join community:', error.message);
-      throw error;
+    if (lowerMessage.includes('help')) {
+      return 'I can help you with questions about the platform, communities, posts, and more. What would you like to know?';
     }
-  }
-
-  async upvotePost(userId, token, postId) {
-    try {
-      const response = await this.client.post(
-        `/posts/${postId}/upvote`,
-        {},
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
-
-      if (response.status !== 200) {
-        throw new Error(`Upvote failed: ${response.data.error}`);
-      }
-
-      console.log(`✓ Bot upvoted post: ${postId}`);
-      return response.data;
-    } catch (error) {
-      console.error('Failed to upvote post:', error.message);
-      throw error;
+    if (lowerMessage.includes('communities')) {
+      return 'Communities are groups of people with shared interests. You can join communities, participate in discussions, and connect with like-minded people!';
     }
-  }
-
-  async deleteBotAccount(userId, token, password) {
-    try {
-      const response = await this.client.delete(
-        '/federation/delete-account',
-        {
-          data: { password },
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
-
-      if (response.status !== 200) {
-        throw new Error(`Account deletion failed: ${response.data.error}`);
-      }
-
-      this.botAccounts = this.botAccounts.filter(acc => acc.userId !== userId);
-
-      console.log(`✓ Bot account deleted: ${userId}`);
-      return response.data;
-    } catch (error) {
-      console.error('Failed to delete bot account:', error.message);
-      throw error;
+    if (lowerMessage.includes('post')) {
+      return 'Posts are how you share content with the community. You can create posts, comment on others\' posts, and engage in discussions!';
     }
-  }
-
-  getBotAccount(username) {
-    return this.botAccounts.find(acc => acc.username === username);
-  }
-
-  getAllBotAccounts() {
-    return this.botAccounts;
-  }
-
-  async simulateBotActivity(botConfig, activityConfig) {
-    try {
-      // Create bot account
-      const botAccount = await this.createBotAccount(botConfig);
-
-      // Join communities
-      if (activityConfig.communities && activityConfig.communities.length > 0) {
-        for (const communityId of activityConfig.communities) {
-          await this.joinBotCommunity(botAccount.userId, botAccount.token, communityId);
-        }
-      }
-
-      // Create posts
-      if (activityConfig.posts && activityConfig.posts.length > 0) {
-        for (const postData of activityConfig.posts) {
-          await this.createBotPost(
-            botAccount.userId,
-            botAccount.token,
-            postData.communityId,
-            {
-              title: postData.title,
-              content: postData.content,
-            },
-          );
-        }
-      }
-
-      // Create comments
-      if (activityConfig.comments && activityConfig.comments.length > 0) {
-        for (const commentData of activityConfig.comments) {
-          await this.createBotComment(
-            botAccount.userId,
-            botAccount.token,
-            commentData.postId,
-            commentData.content,
-          );
-        }
-      }
-
-      console.log(`✓ Bot activity simulation completed for: ${botConfig.username}`);
-      return botAccount;
-    } catch (error) {
-      console.error('Failed to simulate bot activity:', error.message);
-      throw error;
+    if (lowerMessage.includes('profile')) {
+      return 'Your profile is your identity on the platform. You can customize your avatar, bio, and interests to help others get to know you better!';
     }
+    if (lowerMessage.includes('thanks') || lowerMessage.includes('thank you')) {
+      return 'You\'re welcome! Feel free to ask me anything else!';
+    }
+
+    return 'That\'s interesting! I\'m here to help. Feel free to ask me about communities, posts, profiles, or anything else about the platform!';
   }
 }
 

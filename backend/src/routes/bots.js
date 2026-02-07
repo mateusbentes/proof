@@ -1,215 +1,78 @@
 const express = require('express');
-const botService = require('../services/botService');
 const { verifyToken } = require('../middleware/auth');
-const { asyncHandler } = require('../middleware/errorHandler');
-const { query } = require('../db/connection');
+const botService = require('../services/botService');
+const { v4: uuidv4 } = require('uuid');
 
 const router = express.Router();
 
-const checkAdmin = asyncHandler(async (req, res, next) => {
-  const result = await query(
-    'SELECT role FROM users WHERE id = $1',
-    [req.user.userId],
-  );
+const asyncHandler = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 
-  if (!result.rows[0] || result.rows[0].role !== 'admin') {
-    return res.status(403).json({ error: 'Admin access required' });
-  }
-
-  next();
-});
-
-// Create bot account
-router.post('/create', verifyToken, checkAdmin, asyncHandler(async (req, res) => {
-  const {
-    username,
-    email,
-    password,
-    displayName,
-    bio,
-    avatarPrompt,
-  } = req.body;
-
-  if (!username || !email || !password) {
-    return res.status(400).json({ error: 'Username, email, and password are required' });
-  }
-
-  try {
-    const botAccount = await botService.createBotAccount({
-      username,
-      email,
-      password,
-      displayName: displayName || username,
-      bio: bio || 'Bot account',
-      avatarPrompt: avatarPrompt || 'A robot avatar',
-    });
-
-    res.status(201).json({
-      message: 'Bot account created successfully',
-      bot: {
-        userId: botAccount.userId,
-        username: botAccount.username,
-        email: botAccount.email,
-        token: botAccount.token,
-      },
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+// GET /api/bots - Get all active bots
+router.get('/', asyncHandler(async (req, res) => {
+  const bots = await botService.getActiveBots();
+  res.json({ bots });
 }));
 
-// Login bot
-router.post('/login', verifyToken, checkAdmin, asyncHandler(async (req, res) => {
-  const { username, password } = req.body;
+// GET /api/bots/:botId/conversations/:conversationId/messages - Get conversation messages
+router.get(
+  '/:botId/conversations/:conversationId/messages',
+  verifyToken,
+  asyncHandler(async (req, res) => {
+    const { botId, conversationId } = req.params;
+    const limit = Math.min(parseInt(req.query.limit) || 50, 100);
+    const offset = parseInt(req.query.offset) || 0;
 
-  if (!username || !password) {
-    return res.status(400).json({ error: 'Username and password are required' });
-  }
+    const messages = await botService.getConversationMessages(conversationId, limit, offset);
+    res.json({ messages });
+  })
+);
 
-  try {
-    const result = await botService.loginBot(username, password);
-    res.json(result);
-  } catch (error) {
-    res.status(401).json({ error: error.message });
-  }
-}));
-
-// Update bot profile
-router.put('/:botId/profile', verifyToken, checkAdmin, asyncHandler(async (req, res) => {
+// POST /api/bots/:botId/chat - Send message to bot
+router.post('/:botId/chat', verifyToken, asyncHandler(async (req, res) => {
   const { botId } = req.params;
-  const { token, ...profileData } = req.body;
+  const { message } = req.body;
+  const userId = req.user.userId;
 
-  if (!token) {
-    return res.status(400).json({ error: 'Bot token is required' });
+  if (!message || message.trim().length === 0) {
+    return res.status(400).json({ error: 'Message is required' });
   }
 
-  try {
-    const result = await botService.updateBotProfile(botId, token, profileData);
-    res.json(result);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-}));
-
-// Create bot post
-router.post('/:botId/posts', verifyToken, checkAdmin, asyncHandler(async (req, res) => {
-  const { botId } = req.params;
-  const { token, communityId, title, content } = req.body;
-
-  if (!token || !communityId || !title || !content) {
-    return res.status(400).json({ error: 'Token, communityId, title, and content are required' });
+  // Get bot
+  const bot = await botService.getBotById(botId);
+  if (!bot) {
+    return res.status(404).json({ error: 'Bot not found' });
   }
 
-  try {
-    const result = await botService.createBotPost(botId, token, communityId, {
-      title,
-      content,
-    });
-    res.status(201).json(result);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-}));
+  // Get or create conversation
+  const conversationId = await botService.getOrCreateConversation(botId, userId);
 
-// Create bot comment
-router.post('/:botId/comments', verifyToken, checkAdmin, asyncHandler(async (req, res) => {
-  const { botId } = req.params;
-  const { token, postId, content } = req.body;
+  // Add user message
+  await botService.addMessage(conversationId, 'user', message.trim());
 
-  if (!token || !postId || !content) {
-    return res.status(400).json({ error: 'Token, postId, and content are required' });
-  }
+  // Get bot response
+  const botResponse = await botService.getBotResponse(bot, message.trim());
 
-  try {
-    const result = await botService.createBotComment(botId, token, postId, content);
-    res.status(201).json(result);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-}));
+  // Add bot message
+  const botMessage = await botService.addMessage(conversationId, 'bot', botResponse);
 
-// Join community
-router.post('/:botId/communities/:communityId/join', verifyToken, checkAdmin, asyncHandler(async (req, res) => {
-  const { botId, communityId } = req.params;
-  const { token } = req.body;
-
-  if (!token) {
-    return res.status(400).json({ error: 'Bot token is required' });
-  }
-
-  try {
-    const result = await botService.joinBotCommunity(botId, token, communityId);
-    res.json(result);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-}));
-
-// Upvote post
-router.post('/:botId/posts/:postId/upvote', verifyToken, checkAdmin, asyncHandler(async (req, res) => {
-  const { botId, postId } = req.params;
-  const { token } = req.body;
-
-  if (!token) {
-    return res.status(400).json({ error: 'Bot token is required' });
-  }
-
-  try {
-    const result = await botService.upvotePost(botId, token, postId);
-    res.json(result);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-}));
-
-// Delete bot account
-router.delete('/:botId', verifyToken, checkAdmin, asyncHandler(async (req, res) => {
-  const { botId } = req.params;
-  const { token, password } = req.body;
-
-  if (!token || !password) {
-    return res.status(400).json({ error: 'Token and password are required' });
-  }
-
-  try {
-    const result = await botService.deleteBotAccount(botId, token, password);
-    res.json(result);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-}));
-
-// Get all bot accounts
-router.get('/list', verifyToken, checkAdmin, asyncHandler(async (req, res) => {
-  const bots = botService.getAllBotAccounts();
   res.json({
-    count: bots.length,
-    bots: bots.map(bot => ({
-      userId: bot.userId,
-      username: bot.username,
-      email: bot.email,
-      createdAt: bot.createdAt,
-    })),
+    conversationId,
+    message: botMessage,
   });
 }));
 
-// Simulate bot activity
-router.post('/simulate', verifyToken, checkAdmin, asyncHandler(async (req, res) => {
-  const { botConfig, activityConfig } = req.body;
+// GET /api/bots/:botId/conversations - Get user's conversations with a bot
+router.get('/:botId/conversations', verifyToken, asyncHandler(async (req, res) => {
+  const { botId } = req.params;
+  const userId = req.user.userId;
 
-  if (!botConfig || !activityConfig) {
-    return res.status(400).json({ error: 'botConfig and activityConfig are required' });
-  }
+  const conversationId = await botService.getOrCreateConversation(botId, userId);
+  const messages = await botService.getConversationMessages(conversationId);
 
-  try {
-    const result = await botService.simulateBotActivity(botConfig, activityConfig);
-    res.status(201).json({
-      message: 'Bot activity simulation completed',
-      bot: result,
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+  res.json({
+    conversationId,
+    messages,
+  });
 }));
 
 module.exports = router;

@@ -1,68 +1,58 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuthStore } from '../store/authStore';
 
-const Sidebar = ({ isAuthenticated, user, setIsAuthenticated, setUser, setMessages }) => {
+const Sidebar = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
+  const { user, logout } = useAuthStore();
 
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-    setUser(null);
-    setMessages([]);
-    navigate('/');
+  const handleNavigation = (path) => {
+    navigate(path);
+    onClose();
   };
 
-  const handleNav = (section) => {
-    const message = `/ ${section}`;
-    // This will be handled by command parsing in Chat.js
-    // For now, just navigate or trigger command
-    window.postMessage({ type: 'CHAT_COMMAND', command: message }, '*');
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+    onClose();
   };
 
   return (
-    <div className="sidebar">
-      <div className="sidebar-header">
-        <h2>🌐 SocialChat</h2>
+    <>
+      {isOpen && <div className="sidebar-overlay" onClick={onClose} />}
+      <div className={`sidebar ${isOpen ? 'open' : ''}`}>
+        <div className="sidebar-header">
+          <h2>🌐 Proof</h2>
+          <button className="close-btn" onClick={onClose}>✕</button>
+        </div>
+        
+        <nav className="sidebar-nav">
+          <button className="nav-item" onClick={() => handleNavigation('/')}>
+            🏠 Home
+          </button>
+          <button className="nav-item" onClick={() => handleNavigation('/communities')}>
+            💬 Communities
+          </button>
+          <button className="nav-item" onClick={() => handleNavigation('/chat')}>
+            💌 Messages
+          </button>
+          <button className="nav-item" onClick={() => handleNavigation('/profile')}>
+            👤 Profile
+          </button>
+        </nav>
+        
+        <div className="sidebar-footer">
+          {user && (
+            <div className="user-info">
+              <span>@{user.username}</span>
+              <button className="logout-btn" onClick={handleLogout}>
+                🚪 Logout
+              </button>
+            </div>
+          )}
+        </div>
       </div>
-      
-      <nav className="sidebar-nav">
-        <button className="nav-item" onClick={() => handleNav('communities')}>
-          💬 Communities
-        </button>
-        <button className="nav-item" onClick={() => handleNav('posts')}>
-          📝 Posts
-        </button>
-        {isAuthenticated && (
-          <>
-            <button className="nav-item" onClick={() => handleNav('profile')}>
-              👤 Profile
-            </button>
-            <button className="nav-item" onClick={() => handleNav('settings')}>
-              ⚙️ Settings
-            </button>
-            <button className="nav-item" onClick={() => handleNav('chat')}>
-              💌 Messages
-            </button>
-          </>
-        )}
-      </nav>
-      
-      <div className="sidebar-footer">
-        {isAuthenticated ? (
-          <div className="user-info">
-            <img src="/api/avatar" alt="avatar" className="avatar" />
-            <span>@{user?.username}</span>
-            <button className="logout-btn" onClick={handleLogout}>
-              🚪 Logout
-            </button>
-          </div>
-        ) : (
-          <div className="auth-prompt">
-            <p>Not signed in</p>
-            <small>Use /login or /register</small>
-          </div>
-        )}
-      </div>
-    </div>
+    </>
   );
 };
 

@@ -1,89 +1,108 @@
 .navbar {
   background-color: #fff;
   border-bottom: 1px solid #ddd;
-  padding: 0;
+  padding: 0 20px;
   position: sticky;
   top: 0;
   z-index: 100;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.navbar-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   height: 60px;
 }
 
-.navbar-logo {
+.navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex: 0 0 auto;
+}
+
+.menu-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 5px;
+  display: none;
+}
+
+.navbar-title {
   font-size: 24px;
   font-weight: bold;
   color: #0066cc;
-  display: flex;
-  align-items: center;
+  margin: 0;
 }
 
-.nav-menu {
+.navbar-center {
   display: flex;
-  list-style: none;
   gap: 20px;
-  align-items: center;
+  flex: 1;
+  justify-content: center;
 }
 
-.nav-item {
+.navbar-right {
   display: flex;
+  gap: 15px;
   align-items: center;
+  flex: 0 0 auto;
 }
 
 .nav-link {
+  background: none;
+  border: none;
   color: #333;
   font-size: 14px;
+  cursor: pointer;
   transition: color 0.3s ease;
+  padding: 8px 12px;
+  border-radius: 4px;
 }
 
 .nav-link:hover {
   color: #0066cc;
+  background-color: #f0f0f0;
 }
 
-.nav-button {
+.logout-btn {
+  background-color: #f0f0f0;
+  color: #333;
+  border: none;
   padding: 8px 16px;
   border-radius: 4px;
   font-size: 14px;
-  font-weight: 500;
+  cursor: pointer;
   transition: all 0.3s ease;
 }
 
-.nav-button.register {
-  background-color: #0066cc;
-  color: white;
-}
-
-.nav-button.register:hover {
-  background-color: #0052a3;
-}
-
-.nav-button.logout {
-  background-color: #f0f0f0;
-  color: #333;
-}
-
-.nav-button.logout:hover {
+.logout-btn:hover {
   background-color: #e0e0e0;
 }
 
 @media (max-width: 768px) {
-  .navbar-container {
+  .navbar {
     padding: 0 10px;
   }
 
-  .nav-menu {
+  .menu-btn {
+    display: block;
+  }
+
+  .navbar-center {
+    display: none;
+  }
+
+  .navbar-title {
+    font-size: 20px;
+  }
+
+  .navbar-right {
     gap: 10px;
   }
 
-  .navbar-logo {
-    font-size: 20px;
+  .nav-link {
+    font-size: 12px;
+    padding: 6px 10px;
   }
 }

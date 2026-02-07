@@ -19,6 +19,7 @@ const federationRoutes = require('./routes/federation');
 const infrastructureRoutes = require('./routes/infrastructure');
 const botRoutes = require('./routes/bots');
 const chatRoutes = require('./routes/chat');
+const aiChatRoutes = require('./routes/aiChat');
 const { errorHandler } = require('./middleware/errorHandler');
 const { connectDB } = require('./db/connection');
 const { initializeEmailService } = require('./services/emailService');
@@ -92,6 +93,7 @@ app.use('/api/infrastructure', infrastructureRoutes);
 app.use('/api/bots', botRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/chat', require('./routes/chatCommands'));
+app.use('/api', aiChatRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ error: 'Route not found' });

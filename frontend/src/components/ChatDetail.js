@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { useChatStore } from '../store/chatStore';
 import ChatBubble from './ChatBubble';
 import MessageInput from './MessageInput';
+import BotChat from './BotChat';
 import './ChatDetail.css';
 
 function ChatDetail() {
@@ -9,7 +10,7 @@ function ChatDetail() {
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
-    if (selectedThread) {
+    if (selectedThread && selectedThread.thread_type !== 'bot') {
       loadMessages(selectedThread.id);
     }
   }, [selectedThread, loadMessages]);
@@ -28,6 +29,13 @@ function ChatDetail() {
     );
   }
 
+  // Show BotChat component for bot threads
+  if (selectedThread.thread_type === 'bot') {
+    return <BotChat bot={selectedThread} />;
+  }
+
+  const threadMessages = messages[selectedThread.id] || [];
+
   return (
     <div className="chat-detail">
       <div className="chat-header">
@@ -39,10 +47,10 @@ function ChatDetail() {
           <div className="loading">Loading messages...</div>
         ) : error ? (
           <div className="error">{error}</div>
-        ) : messages.length === 0 ? (
+        ) : threadMessages.length === 0 ? (
           <div className="no-messages">No messages yet. Start the conversation!</div>
         ) : (
-          messages.map((message) => (
+          threadMessages.map((message) => (
             <ChatBubble key={message.id} message={message} />
           ))
         )}
