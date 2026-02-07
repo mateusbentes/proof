@@ -21,9 +21,10 @@ router.get('/threads', verifyToken, asyncHandler(async (req, res) => {
       ct.created_at,
       ct.updated_at,
       COUNT(CASE WHEN cm.created_at > ctp.last_read_at THEN 1 END) as unread_count,
-      (SELECT json_agg(json_build_object('id', u.id, 'username', u.username, 'avatar_url', u.avatar_url))
+      (SELECT json_agg(json_build_object('id', u.id, 'username', u.username, 'avatar_url', up.avatar_url))
        FROM chat_thread_participants ctp2
        JOIN users u ON u.id = ctp2.user_id
+       LEFT JOIN user_profiles up ON u.id = up.user_id
        WHERE ctp2.thread_id = ct.id AND ctp2.user_id != $1
        LIMIT 3) as participants,
       (SELECT content FROM chat_messages WHERE thread_id = ct.id ORDER BY created_at DESC LIMIT 1) as last_message
@@ -116,7 +117,10 @@ router.post('/threads/:threadId/messages', verifyToken, asyncHandler(async (req,
     );
 
     const senderResult = await query(
-      'SELECT username, avatar_url FROM users WHERE id = $1',
+      `SELECT u.username, up.avatar_url 
+       FROM users u 
+       LEFT JOIN user_profiles up ON u.id = up.user_id 
+       WHERE u.id = $1`,
       [userId]
     );
 
@@ -124,7 +128,7 @@ router.post('/threads/:threadId/messages', verifyToken, asyncHandler(async (req,
       id: messageId,
       sender_id: userId,
       username: senderResult.rows[0].username,
-      avatar_url: senderResult.rows[0].avatar_url,
+      avatar_url: senderResult.rows[0].avatar_url || null,
       content: content.trim(),
       created_at: new Date().toISOString()
     };
