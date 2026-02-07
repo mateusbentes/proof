@@ -38,6 +38,24 @@ function ChatThreadsList() {
     setSelectedThread(botThread);
   };
 
+  const handleNewChat = () => {
+    // Show a simple prompt to get username
+    const username = prompt('Enter username to start a conversation:');
+    if (username && username.trim()) {
+      // Create a temporary thread object for new conversation
+      const newThread = {
+        id: `temp-${Date.now()}`,
+        thread_type: 'dm',
+        title: username,
+        participants: [{ username, avatar_url: null }],
+        lastMessage: 'New conversation',
+        unreadCount: 0,
+        getDisplayName: () => username,
+      };
+      setSelectedThread(newThread);
+    }
+  };
+
   if (loading || botsLoading) {
     return <div className="threads-list loading">Loading conversations...</div>;
   }
@@ -46,7 +64,7 @@ function ChatThreadsList() {
     <div className="threads-list">
       <div className="threads-header">
         <h2>Messages</h2>
-        <button className="new-chat-btn">+</button>
+        <button className="new-chat-btn" onClick={handleNewChat}>+</button>
       </div>
       <div className="threads-container">
         {/* Bots Section */}

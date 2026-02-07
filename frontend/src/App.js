@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import Chat from './pages/Chat';
+import ChatPage from './pages/Chat';
+import ConversationalChat from './components/Chat';
 import Home from './pages/Home';
 import Communities from './pages/Communities';
 import Profile from './pages/Profile';
@@ -26,9 +27,9 @@ function App() {
           {/* Unauthenticated routes - Chat for auth */}
           {!isAuthenticated && (
             <>
-              <Route path="/" element={<Chat />} />
-              <Route path="/chat" element={<Chat />} />
-              <Route path="*" element={<Chat />} />
+              <Route path="/" element={<ConversationalChat />} />
+              <Route path="/chat" element={<ConversationalChat />} />
+              <Route path="*" element={<ConversationalChat />} />
             </>
           )}
 
@@ -39,7 +40,7 @@ function App() {
               <Route path="/home" element={<Home />} />
               <Route path="/communities" element={<Communities />} />
               <Route path="/profile" element={<Profile />} />
-              <Route path="/chat" element={<Chat />} />
+              <Route path="/chat" element={<ChatPage />} />
               <Route path="/conversational" element={<ConversationalHome />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </>
