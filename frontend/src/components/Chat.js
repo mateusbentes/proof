@@ -14,6 +14,8 @@ const Chat = () => {
   const [tempUser, setTempUser] = useState({ username: '', password: '' });
   const messagesEndRef = useRef(null);
 
+
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
