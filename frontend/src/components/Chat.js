@@ -90,11 +90,20 @@ const Chat = () => {
             // Redirect after 2 seconds
             setTimeout(() => navigate('/'), 2000);
           } catch (error) {
-            console.error('Registration error:', error);
-            let errorContent = 'Sorry, there was an error creating your account. Please try again.';
+            console.error('Registration error full:', error);
+            console.error('Error response:', error.response);
+            console.error('Error message:', error.message);
             
-            if (error.response?.data?.error) {
+            let errorContent = 'Sorry, there was an error creating your account.';
+            
+            if (error.response?.status === 409) {
+              errorContent = 'Username already exists. Please try another.';
+            } else if (error.response?.data?.error) {
               errorContent = `Error: ${error.response.data.error}`;
+            } else if (error.response?.status) {
+              errorContent = `Server error (${error.response.status}). Please try again.`;
+            } else if (error.message === 'Network Error') {
+              errorContent = 'Network error. Is the server running?';
             } else if (error.message) {
               errorContent = `Error: ${error.message}`;
             }
