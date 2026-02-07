@@ -3,14 +3,14 @@ import ChatThreadsList from '../components/ChatThreadsList';
 import ChatDetail from '../components/ChatDetail';
 import './Chat.css';
 
-const Chat = () =&gt; {
+const Chat = () => {
   return (
-    &lt;div className="chat-page"&gt;
-      &lt;div className="chat-container"&gt;
-        &lt;ChatThreadsList /&gt;
-        &lt;ChatDetail /&gt;
-      &lt;/div&gt;
-    &lt;/div&gt;
+    <div className="chat-page">
+      <div className="chat-container">
+        <ChatThreadsList />
+        <ChatDetail />
+      </div>
+    </div>
   );
 };
 

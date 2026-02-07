@@ -1,56 +1,60 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useChatStore } from '../store/chatStore';
 import ChatBubble from './ChatBubble';
 import MessageInput from './MessageInput';
+import './ChatDetail.css';
 
-const ChatDetail = () =&gt; {
-  const {
-    activeThreadId,
-    messages,
-    loadingMessages,
-    error,
-    fetchMessages,
-    sendMessage
-  } = useChatStore();
+function ChatDetail() {
+  const { selectedThread, messages, loading, error, loadMessages, sendMessage } = useChatStore();
+  const messagesEndRef = useRef(null);
 
-  React.useEffect(() =&gt; {
-    if (activeThreadId) {
-      fetchMessages(activeThreadId);
+  useEffect(() => {
+    if (selectedThread) {
+      loadMessages(selectedThread.id);
     }
-  }, [activeThreadId, fetchMessages]);
+  }, [selectedThread, loadMessages]);
 
-  if (!activeThreadId) {
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  if (!selectedThread) {
     return (
-      &lt;div className="chat-detail"&gt;
-        &lt;div className="no-chat-selected"&gt;
-          &lt;h3&gt;Select a conversation&lt;/h3&gt;
-          &lt;p&gt;Choose a conversation from the list to start chatting&lt;/p&gt;
-        &lt;/div&gt;
-      &lt;/div&gt;
+      <div className="chat-detail empty">
+        <div className="empty-state">
+          <p>Select a conversation to start chatting</p>
+        </div>
+      </div>
     );
   }
 
   return (
-    &lt;div className="chat-detail"&gt;
-      {loadingMessages &amp;&amp; messages.length === 0 ? (
-        &lt;div className="loading"&gt;Loading messages...&lt;/div&gt;
-      ) : error ? (
-        &lt;div className="error"&gt;
-          &lt;p&gt;{error}&lt;/p&gt;
-          &lt;button onClick={() =&gt; fetchMessages(activeThreadId)}&gt;Retry&lt;/button&gt;
-        &lt;/div&gt;
-      ) : (
-        &lt;&gt;
-          &lt;div className="messages-container"&gt;
-            {messages.map((message) =&gt; (
-              &lt;ChatBubble key={message.id} message={message} /&gt;
-            ))}
-          &lt;/div&gt;
-          &lt;MessageInput /&gt;
-        &lt;/&gt;
-      )}
-    &lt;/div&gt;
+    <div className="chat-detail">
+      <div className="chat-header">
+        <h2>{selectedThread.getDisplayName('current_user_id')}</h2>
+      </div>
+
+      <div className="messages-container">
+        {loading ? (
+          <div className="loading">Loading messages...</div>
+        ) : error ? (
+          <div className="error">{error}</div>
+        ) : messages.length === 0 ? (
+          <div className="no-messages">No messages yet. Start the conversation!</div>
+        ) : (
+          messages.map((message) => (
+            <ChatBubble key={message.id} message={message} />
+          ))
+        )}
+        <div ref={messagesEndRef} />
+      </div>
+
+      <MessageInput
+        threadId={selectedThread.id}
+        onSendMessage={(content) => sendMessage(selectedThread.id, content)}
+      />
+    </div>
   );
-};
+}
 
 export default ChatDetail;

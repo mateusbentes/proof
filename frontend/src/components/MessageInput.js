@@ -1,74 +1,50 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useChatStore } from '../store/chatStore';
+import React, { useState } from 'react';
+import './MessageInput.css';
 
-const MessageInput = () =&gt; {
-  const [text, setText] = useState('');
-  const [sending, setSending] = useState(false);
-  const { activeThreadId, sendMessage } = useChatStore();
-  const inputRef = useRef(null);
-  const fileInputRef = useRef(null);
+function MessageInput({ threadId, onSendMessage }) {
+  const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e) =&gt; {
-    e.preventDefault();
-    if (!text.trim() || !activeThreadId || sending) return;
+  const handleSend = async () => {
+    if (!message.trim()) return;
 
-    setSending(true);
+    setLoading(true);
     try {
-      await sendMessage(activeThreadId, { text: text.trim() });
-      setText('');
+      await onSendMessage(message);
+      setMessage('');
     } catch (error) {
-      console.error('Failed to send message:', error);
+      console.error('Error sending message:', error);
     } finally {
-      setSending(false);
+      setLoading(false);
     }
   };
 
-  const handleImageUpload = (e) =&gt; {
-    const file = e.target.files[0];
-    if (file &amp;&amp; activeThreadId) {
-      sendMessage(activeThreadId, { image: file });
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
     }
   };
-
-  useEffect(() =&gt; {
-    inputRef.current?.focus();
-  }, [activeThreadId]);
-
-  if (!activeThreadId) return null;
 
   return (
-    &lt;form className="message-input-container" onSubmit={handleSubmit}&gt;
-      &lt;button
-        type="button"
-        className="image-upload-btn"
-        onClick={() =&gt; fileInputRef.current?.click()}
-        disabled={sending}
-        title="Send image"
-      &gt;
-        📷
-      &lt;/button&gt;
-      &lt;input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        onChange={handleImageUpload}
-        style={{ display: 'none' }}
-      /&gt;
-      &lt;input
-        ref={inputRef}
-        type="text"
-        value={text}
-        onChange={(e) =&gt; setText(e.target.value)}
+    <div className="message-input">
+      <textarea
+        value={message}
+        onChange={(e) => setMessage(e.target.value)}
+        onKeyPress={handleKeyPress}
         placeholder="Type a message..."
-        className="message-input"
-        disabled={sending}
-        maxLength={1000}
-      /&gt;
-      &lt;button type="submit" className="send-btn" disabled={!text.trim() || sending}&gt;
-        {sending ? '...' : 'Send'}
-      &lt;/button&gt;
-    &lt;/form&gt;
+        disabled={loading}
+        rows="3"
+      />
+      <button
+        onClick={handleSend}
+        disabled={loading || !message.trim()}
+        className="send-btn"
+      >
+        {loading ? 'Sending...' : 'Send'}
+      </button>
+    </div>
   );
-};
+}
 
 export default MessageInput;

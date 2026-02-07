@@ -1,34 +1,25 @@
 import React from 'react';
-import { formatDistanceToNow } from 'date-fns';
+import './ChatBubble.css';
 
-const ChatBubble = ({ message }) =&gt; {
-  const isOwn = message.senderId === 'current-user'; // Assuming current user identifier
-  const timeAgo = formatDistanceToNow(new Date(message.createdAt), { addSuffix: true });
+function ChatBubble({ message, isCurrentUser = false }) {
+  const formatTime = (date) => {
+    return new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
 
   return (
-    &lt;div className={`message-bubble ${isOwn ? 'own' : 'other'}`} key={message.id}&gt;
-      {!isOwn &amp;&amp; (
-        &lt;div className="message-avatar"&gt;
-          {message.sender?.avatar ? (
-            &lt;img src={message.sender.avatar} alt={message.sender.name} /&gt;
-          ) : (
-            &lt;div className="avatar-placeholder"&gt;
-              {message.sender?.name?.charAt(0).toUpperCase() || 'U'}
-            &lt;/div&gt;
-          )}
-        &lt;/div&gt;
+    <div className={`chat-bubble ${isCurrentUser ? 'own' : 'other'}`}>
+      {!isCurrentUser && (
+        <div className="bubble-avatar">
+          {message.username[0].toUpperCase()}
+        </div>
       )}
-      &lt;div className={`bubble-content ${isOwn ? 'own' : 'other'}`}&gt;
-        {message.text &amp;&amp; (
-          &lt;div className="message-text"&gt;{message.text}&lt;/div&gt;
-        )}
-        {message.image &amp;&amp; (
-          &lt;img src={message.image} alt="Shared image" className="message-image" /&gt;
-        )}
-        &lt;div className="message-time"&gt;{timeAgo}&lt;/div&gt;
-      &lt;/div&gt;
-    &lt;/div&gt;
+      <div className="bubble-content">
+        {!isCurrentUser && <div className="bubble-name">{message.username}</div>}
+        <div className="bubble-message">{message.content}</div>
+        <div className="bubble-time">{formatTime(message.createdAt)}</div>
+      </div>
+    </div>
   );
-};
+}
 
 export default ChatBubble;
