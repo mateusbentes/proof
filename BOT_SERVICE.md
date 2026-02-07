@@ -341,6 +341,36 @@ No additional configuration needed. Bot service uses existing:
 - Bots are subject to rate limiting
 - Bots cannot bypass conversational authentication
 
+## Integration with Auto-Registration Service
+
+The bot service works seamlessly with the Auto-Registration Service for automated user creation:
+
+```javascript
+const autoRegService = require('./services/autoRegistrationService');
+const botService = require('./services/botService');
+
+// Step 1: Auto-register users
+const users = await autoRegService.autoRegisterMultiple(10, {
+  usernamePrefix: 'bot',
+  displayName: 'Bot User',
+  bio: 'Automated bot user'
+});
+
+// Step 2: Use their tokens with bot service
+for (const user of users) {
+  // Join communities
+  await botService.joinBotCommunity(user.userId, user.token, communityId);
+  
+  // Create posts
+  await botService.createBotPost(user.userId, user.token, communityId, {
+    title: 'Automated Post',
+    content: 'This was created by an automated bot'
+  });
+}
+```
+
+See [AUTO_REGISTRATION.md](./AUTO_REGISTRATION.md) for complete auto-registration documentation.
+
 ## Future Enhancements
 
 - Scheduled bot actions (cron jobs)
@@ -348,3 +378,5 @@ No additional configuration needed. Bot service uses existing:
 - Advanced activity simulation
 - Bot analytics and reporting
 - Multi-bot coordination
+- Integration with external bot frameworks
+- Advanced bot personality customization
