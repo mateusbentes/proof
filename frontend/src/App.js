@@ -9,6 +9,7 @@ import Login from './pages/Login';
 import ConversationalAuth from './pages/ConversationalAuth';
 import Communities from './pages/Communities';
 import Profile from './pages/Profile';
+import Chat from './pages/Chat';
 import './App.css';
 
 function App() {
@@ -26,6 +27,7 @@ function App() {
             <Route path="/auth/:sessionId" element={<ConversationalAuth />} />
             <Route path="/communities" element={token ? <Communities /> : <Navigate to="/" />} />
             <Route path="/profile" element={token ? <Profile /> : <Navigate to="/" />} />
+            <Route path="/chat" element={token ? <Chat /> : <Navigate to="/" />} />
           </Routes>
         </main>
       </div>

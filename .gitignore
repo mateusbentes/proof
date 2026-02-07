@@ -21,3 +21,24 @@ out/
 coverage/
 .env.test
 postgres_data/
+
+# Refact Plan
+.refact/
+refact_plan.md
+.refact_plan/
+
+# Flutter
+mobile/flutter/.dart_tool/
+mobile/flutter/.flutter-plugins
+mobile/flutter/.flutter-plugins-dependencies
+mobile/flutter/.packages
+mobile/flutter/build/
+mobile/flutter/.pub-cache/
+
+# iOS
+mobile/flutter/ios/Pods/
+mobile/flutter/ios/Podfile.lock
+
+# Android
+mobile/flutter/android/.gradle/
+mobile/flutter/android/local.properties

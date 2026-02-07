@@ -29,6 +29,11 @@ function Navbar() {
           {token ? (
             <>
               <li className="nav-item">
+                <Link to="/chat" className="nav-link">
+                  💬 Messages
+                </Link>
+              </li>
+              <li className="nav-item">
                 <Link to="/profile" className="nav-link">
                   {user?.username || 'Profile'}
                 </Link>

@@ -4,6 +4,8 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const http = require('http');
+const { Server } = require('socket.io');
 
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
@@ -16,6 +18,7 @@ const monitoringRoutes = require('./routes/monitoring');
 const federationRoutes = require('./routes/federation');
 const infrastructureRoutes = require('./routes/infrastructure');
 const botRoutes = require('./routes/bots');
+const chatRoutes = require('./routes/chat');
 const { errorHandler } = require('./middleware/errorHandler');
 const { connectDB } = require('./db/connection');
 const { initializeEmailService } = require('./services/emailService');
@@ -24,8 +27,16 @@ const monitoringService = require('./services/monitoringService');
 const atprotoService = require('./services/atprotoService');
 const cdnService = require('./services/cdnService');
 const loadBalancerService = require('./services/loadBalancerService');
+const { initializeSocket } = require('./socket');
 
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: process.env.NODE_ENV === 'production' ? process.env.FRONTEND_URL : '*',
+    credentials: true
+  }
+});
 const PORT = process.env.PORT || 3001;
 
 app.use(helmet());
@@ -79,6 +90,7 @@ app.use('/api/monitoring', monitoringRoutes);
 app.use('/api/federation', federationRoutes);
 app.use('/api/infrastructure', infrastructureRoutes);
 app.use('/api/bots', botRoutes);
+app.use('/api/chat', chatRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ error: 'Route not found' });
@@ -109,7 +121,10 @@ const startServer = async () => {
       console.log('✓ Load balancer initialized');
     }
 
-    app.listen(PORT, () => {
+    initializeSocket(io);
+    console.log('✓ Socket.IO initialized');
+
+    server.listen(PORT, () => {
       console.log(`✓ Server running on http://localhost:${PORT}`);
     });
   } catch (error) {
