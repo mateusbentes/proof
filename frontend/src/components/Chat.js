@@ -59,7 +59,8 @@ const Chat = () => {
           setMessages(prev => [...prev, response]);
           setAuthStep('password');
         } else if (authStep === 'password') {
-          setTempUser({ ...tempUser, password: userInput });
+          const updatedUser = { ...tempUser, password: userInput };
+          setTempUser(updatedUser);
           const response = {
             role: 'bot',
             content: `Great! Your account is being created... ✨\n\nWelcome to Proof, ${tempUser.username}! You now have access to chat, communities, and social features. Let's explore! 🚀`,
