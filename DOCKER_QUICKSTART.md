@@ -8,13 +8,36 @@ Run the entire Proof platform with Docker Compose in just 2 commands!
 # 1. Start everything
 docker-compose up -d
 
-# 2. Wait for Ollama to download the model (2-3 minutes)
-docker-compose logs -f ollama
+# 2. Wait for services to start (2-3 minutes for Ollama model download)
+docker-compose logs -f
 
-# 3. Visit http://localhost:3000
+# 3. You'll see:
+# Creating proof-redis    ... done
+# Creating proof-rasa     ... done
+# Creating proof-postgres ... done
+# Creating proof-ollama   ... done
+# Creating proof-backend  ... done
+# Creating proof-frontend ... done
+
+# 4. Visit http://localhost:3000
 ```
 
 That's it! Everything is running. 🎉
+
+---
+
+## 📊 Services Overview
+
+The complete stack includes:
+
+| Service | Port | Purpose | Status |
+|---------|------|---------|--------|
+| Redis | 6379 | Cache & Session Store | Health check every 10s |
+| PostgreSQL | 5432 | Database | Health check every 10s |
+| Rasa | 5005 | Conversational AI | Health check every 30s |
+| Ollama | 11434 | Local AI Models | Health check every 30s |
+| Backend | 3001 | Node.js API | Health check every 30s |
+| Frontend | 3000 | React App | Auto-restart |
 
 ---
 
@@ -82,6 +105,9 @@ docker-compose ps
 
 # Should show:
 # NAME                STATUS
+# proof-redis         Up (healthy)
+# proof-rasa          Up (healthy)
+# proof-postgres      Up (healthy)
 # proof-ollama        Up (healthy)
 # proof-backend       Up (healthy)
 # proof-frontend      Up (healthy)
@@ -197,6 +223,51 @@ services:
         reservations:
           cpus: '2'
           memory: 8G
+```
+
+---
+
+## 🚀 Services
+
+### Redis Configuration
+
+Redis is used for caching and session storage:
+
+**Configuration:**
+- Host: redis
+- Port: 6379
+- No authentication (local only)
+
+**Connect to Redis:**
+```bash
+# Docker
+docker-compose exec redis redis-cli
+
+# Commands
+docker-compose exec redis redis-cli PING
+docker-compose exec redis redis-cli KEYS "*"
+docker-compose exec redis redis-cli FLUSHALL
+```
+
+### Rasa Configuration
+
+Rasa provides conversational AI capabilities:
+
+**Configuration:**
+- Host: rasa
+- Port: 5005
+- API: http://localhost:5005
+
+**Access Rasa:**
+```bash
+# Check Rasa status
+curl http://localhost:5005/
+
+# View Rasa logs
+docker-compose logs -f rasa
+
+# Rasa shell
+docker-compose exec rasa rasa shell
 ```
 
 ---
