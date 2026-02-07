@@ -1,86 +1,62 @@
 version: '3.8'
 
 services:
-  postgres:
-    image: postgres:15-alpine
-    container_name: proof_postgres
-    environment:
-      POSTGRES_USER: proof_user
-      POSTGRES_PASSWORD: proof_password
-      POSTGRES_DB: proof_db
+  # Ollama - Local AI Model Server
+  ollama:
+    image: ollama/ollama:latest
+    container_name: proof-ollama
     ports:
-      - "5432:5432"
+      - "11434:11434"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./backend/db/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_NUM_THREAD=8
+    restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U proof_user"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
+  # Backend - Node.js API Server
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: proof_backend
-    environment:
-      NODE_ENV: development
-      DATABASE_URL: postgresql://proof_user:proof_password@postgres:5432/proof_db
-      JWT_SECRET: your_jwt_secret_key_change_in_production
-      PORT: 3001
-      RASA_URL: http://rasa:5005
-      REDIS_URL: redis://redis:6379
+    container_name: proof-backend
     ports:
       - "3001:3001"
-    depends_on:
-      postgres:
-        condition: service_healthy
-    volumes:
-      - ./backend:/app
-      - /app/node_modules
-    command: sh -c "npm install && npm run dev"
-
-  redis:
-    image: redis:7-alpine
-    container_name: proof_redis
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  rasa:
-    image: rasa/rasa:3.5.0
-    container_name: proof_rasa
-    ports:
-      - "5005:5005"
-    volumes:
-      - ./backend/rasa:/app
-    command: run --enable-api --cors "*"
     environment:
-      RASA_NLU_FALLBACK_THRESHOLD: 0.3
+      - OLLAMA_API_URL=http://ollama:11434/api
+      - OLLAMA_MODEL=mistral
+      - API_URL=http://localhost:3001/api
+      - NODE_ENV=production
+    depends_on:
+      ollama:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/api/local-ai/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
+  # Frontend - React App
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: proof_frontend
-    environment:
-      REACT_APP_API_URL: http://localhost:3001
+    container_name: proof-frontend
     ports:
       - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=http://localhost:3001/api
     depends_on:
       - backend
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    command: sh -c "npm install && npm start"
+    restart: unless-stopped
 
 volumes:
-  postgres_data:
-  redis_data:
+  ollama_data:
+    driver: local
