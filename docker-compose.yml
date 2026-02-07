@@ -1,4 +1,4 @@
-version: '3.8'
+version: '3.7'
 
 services:
   # Redis - Cache & Session Store
@@ -104,12 +104,6 @@ services:
       rasa:
         condition: service_healthy
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3001/api/local-ai/status"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
 
   # Frontend - React App
   frontend:
