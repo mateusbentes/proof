@@ -91,9 +91,17 @@ const Chat = () => {
             setTimeout(() => navigate('/'), 2000);
           } catch (error) {
             console.error('Registration error:', error);
+            let errorContent = 'Sorry, there was an error creating your account. Please try again.';
+            
+            if (error.response?.data?.error) {
+              errorContent = `Error: ${error.response.data.error}`;
+            } else if (error.message) {
+              errorContent = `Error: ${error.message}`;
+            }
+            
             const errorMsg = {
               role: 'bot',
-              content: 'Sorry, there was an error creating your account. Please try again.',
+              content: errorContent,
               timestamp: new Date()
             };
             setMessages(prev => [...prev, errorMsg]);
