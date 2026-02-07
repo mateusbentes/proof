@@ -83,26 +83,18 @@ services:
     ports:
       - "3001:3001"
     environment:
+      - DATABASE_URL=postgresql://proof:proof_password@postgres:5432/proof_db
       - OLLAMA_API_URL=http://ollama:11434/api
       - OLLAMA_MODEL=mistral
       - RASA_URL=http://rasa:5005
       - REDIS_URL=redis://redis:6379
       - API_URL=http://localhost:3001/api
       - NODE_ENV=production
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_NAME=proof_db
-      - DB_USER=proof
-      - DB_PASSWORD=proof_password
     depends_on:
-      ollama:
-        condition: service_healthy
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      rasa:
-        condition: service_healthy
+      - ollama
+      - postgres
+      - redis
+      - rasa
     restart: unless-stopped
 
   # Frontend - React App
