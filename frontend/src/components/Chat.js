@@ -1,8 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuthStore } from '../store/authStore';
 import Sidebar from './Sidebar';
+import apiClient from '../api/client';
 import './Chat.css';
 
 const Chat = () => {
+  const navigate = useNavigate();
+  const { setToken, setUser: setAuthUser } = useAuthStore();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -74,6 +79,11 @@ const Chat = () => {
       setIsAuthenticated(false);
       setUser(null);
       setMessages([]);
+      
+      // Clear authStore
+      const { logout } = useAuthStore.getState();
+      logout();
+      
       return 'Logged out successfully. Use /login or /register to continue.';
     }
     if (command === '/login') {
@@ -81,19 +91,42 @@ const Chat = () => {
     }
     if (command.startsWith('/login ') && !isAuthenticated) {
       const [_, username, password] = command.split(' ');
-      // Simulate auth
-      setUser({ username, joined: new Date().toLocaleDateString() });
+      // Simulate auth - in production, call actual API
+      const userData = { username, userId: `user-${Date.now()}`, joined: new Date().toLocaleDateString() };
+      const token = `token-${Date.now()}`;
+      
+      // Update authStore
+      setAuthUser(userData);
+      setToken(token);
+      
+      // Update local state
+      setUser(userData);
       setIsAuthenticated(true);
-      return `Welcome back, ${username}! You can now chat, join communities, and more. Try /communities`;
+      
+      // Navigate to home after a short delay
+      setTimeout(() => navigate('/'), 1000);
+      return `Welcome back, ${username}! You can now chat, join communities, and more. Redirecting...`;
     }
     if (command === '/register') {
       return 'Please type: /register username password';
     }
     if (command.startsWith('/register ') && !isAuthenticated) {
       const [_, username, password] = command.split(' ');
-      setUser({ username, joined: new Date().toLocaleDateString() });
+      // Simulate auth - in production, call actual API
+      const userData = { username, userId: `user-${Date.now()}`, joined: new Date().toLocaleDateString() };
+      const token = `token-${Date.now()}`;
+      
+      // Update authStore
+      setAuthUser(userData);
+      setToken(token);
+      
+      // Update local state
+      setUser(userData);
       setIsAuthenticated(true);
-      return `Account created for ${username}! Welcome aboard. Try /communities`;
+      
+      // Navigate to home after a short delay
+      setTimeout(() => navigate('/'), 1000);
+      return `Account created for ${username}! Welcome aboard. Redirecting...`;
     }
     
     return null; // Not a command
