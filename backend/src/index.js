@@ -91,6 +91,7 @@ app.use('/api/federation', federationRoutes);
 app.use('/api/infrastructure', infrastructureRoutes);
 app.use('/api/bots', botRoutes);
 app.use('/api/chat', chatRoutes);
+app.use('/api/chat', require('./routes/chatCommands'));
 
 app.use((req, res) => {
   res.status(404).json({ error: 'Route not found' });
