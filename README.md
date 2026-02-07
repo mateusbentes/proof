@@ -200,7 +200,16 @@ docker-compose restart <service-name>
 
 ## 📄 License
 
-MIT License
+Dual Licensed:
+- **Client Code** (Frontend): MIT License
+- **Server Code** (Backend): Apache 2.0 License
+
+This dual-licensing approach, similar to Bluesky, allows:
+- ✅ Freedom to fork and modify
+- ✅ Commercial use permitted
+- ✅ Community contributions encouraged
+- ✅ Clear attribution requirements
+- ✅ Patent protection (Apache 2.0)
 
 ---
 

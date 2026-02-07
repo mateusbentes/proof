@@ -214,8 +214,17 @@ docker stats
 docker-compose logs -f
 ```
 
+## Licensing
+
+Proof is dual-licensed:
+- **Frontend (MIT)**: Client code, UI, components
+- **Backend (Apache 2.0)**: Server code, API, services
+
+See LICENSE.md for full details.
+
 ## Support
 
 - **Ollama**: https://github.com/ollama/ollama
 - **Rasa**: https://rasa.com
 - **Docker**: https://docs.docker.com
+- **License**: See LICENSE.md
