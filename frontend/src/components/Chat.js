@@ -169,7 +169,6 @@ const Chat = () => {
               onChange={(e) => setInput(e.target.value)}
               placeholder={isAuthenticated ? "Type a message or command..." : "Get started with /login or /register"}
               className="chat-input"
-              disabled={!isAuthenticated && !input.startsWith('/login') && !input.startsWith('/register')}
               onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSubmit(e)}
             />
             <button type="submit" className="send-button" disabled={isLoading || !input.trim()}>
