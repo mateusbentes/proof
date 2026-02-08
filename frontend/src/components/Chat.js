@@ -167,7 +167,12 @@ const Chat = () => {
             throw new Error('Mistral bot not found');
           }
 
-          const response = await apiClient.post(`/bots/${mistralBot.id}/chat`, {
+          // Use public endpoint for unauthenticated users, authenticated endpoint for logged-in users
+          const endpoint = token 
+            ? `/bots/${mistralBot.id}/chat`
+            : `/bots/${mistralBot.id}/chat/public`;
+
+          const response = await apiClient.post(endpoint, {
             message: userInput
           });
 

@@ -27,7 +27,7 @@ router.get(
   })
 );
 
-// POST /api/bots/:botId/chat - Send message to bot
+// POST /api/bots/:botId/chat - Send message to bot (authenticated)
 router.post('/:botId/chat', verifyToken, asyncHandler(async (req, res) => {
   const { botId } = req.params;
   const { message } = req.body;
@@ -58,6 +58,33 @@ router.post('/:botId/chat', verifyToken, asyncHandler(async (req, res) => {
   res.json({
     conversationId,
     message: botMessage,
+  });
+}));
+
+// POST /api/bots/:botId/chat/public - Send message to bot (unauthenticated)
+router.post('/:botId/chat/public', asyncHandler(async (req, res) => {
+  const { botId } = req.params;
+  const { message } = req.body;
+
+  if (!message || message.trim().length === 0) {
+    return res.status(400).json({ error: 'Message is required' });
+  }
+
+  // Get bot
+  const bot = await botService.getBotById(botId);
+  if (!bot) {
+    return res.status(404).json({ error: 'Bot not found' });
+  }
+
+  // Get bot response (no conversation tracking for unauthenticated users)
+  const botResponse = await botService.getBotResponse(bot, message.trim());
+
+  res.json({
+    message: {
+      id: require('uuid').v4(),
+      content: botResponse,
+      created_at: new Date().toISOString()
+    }
   });
 }));
 
