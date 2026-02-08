@@ -26,16 +26,17 @@ const Chat = () => {
 
   // Initialize chat with Mistral greeting
   useEffect(() => {
-    if (messages.length === 0 && !token) {
+    if (messages.length === 0) {
       const greeting = {
         role: 'bot',
-        content: 'Hello! 👋 I\'m Mistral, your AI assistant. Let\'s get you set up. What\'s your username?',
+        content: token 
+          ? `Welcome back, ${authUser?.username}! 👋 How can I help you today?`
+          : 'Hello! 👋 I\'m Mistral, your AI assistant on Proof. I\'m here to help you prove you\'re human through conversation. Feel free to chat with me, or use /login or /register to access your account. Type /help for commands.',
         timestamp: new Date()
       };
       setMessages([greeting]);
-      setAuthStep('username');
     }
-  }, []);
+  }, [token, authUser]);
 
   const sendMessage = async () => {
     if (!input.trim() || isLoading) return;
@@ -47,83 +48,129 @@ const Chat = () => {
     setIsLoading(true);
 
     try {
-      // Handle authentication flow
-      if (!token) {
-        if (authStep === 'username') {
-          setTempUser({ ...tempUser, username: userInput });
-          const response = {
+      // Check for special commands
+      if (userInput.toLowerCase().startsWith('/login ')) {
+        const [_, username, password] = userInput.split(' ');
+        if (!username || !password) {
+          const errorMsg = {
             role: 'bot',
-            content: `Nice to meet you, ${userInput}! 😊 Now, please create a password for your account.`,
+            content: 'Usage: /login username password',
             timestamp: new Date()
           };
-          setMessages(prev => [...prev, response]);
-          setAuthStep('password');
-        } else if (authStep === 'password') {
-          const updatedUser = { ...tempUser, password: userInput };
-          setTempUser(updatedUser);
-          const response = {
-            role: 'bot',
-            content: `Great! Your account is being created... ✨\n\nWelcome to Proof, ${tempUser.username}! You now have access to chat, communities, and social features. Let's explore! 🚀`,
-            timestamp: new Date()
-          };
-          setMessages(prev => [...prev, response]);
-          
-          try {
-            // Call backend to create account and get JWT token
-            const authResponse = await apiClient.post('/auth/register', {
-              username: tempUser.username,
-              password: userInput,
-              email: `${tempUser.username}@proof.local`
-            });
-            
-            const userData = {
-              username: authResponse.data.user.username,
-              userId: authResponse.data.user.id,
-              joined: new Date().toLocaleDateString()
-            };
-            const newToken = authResponse.data.token;
-            
-            setAuthUser(userData);
-            setToken(newToken);
-            setAuthStep('complete');
-            
-            // Redirect after 2 seconds
-            setTimeout(() => navigate('/'), 2000);
-          } catch (error) {
-            console.error('Registration error full:', error);
-            console.error('Error response:', error.response);
-            console.error('Error message:', error.message);
-            
-            let errorContent = 'Sorry, there was an error creating your account.';
-            
-            if (error.response?.status === 409) {
-              errorContent = 'Username already exists. Please try another.';
-            } else if (error.response?.data?.error) {
-              errorContent = `Error: ${error.response.data.error}`;
-            } else if (error.response?.status) {
-              errorContent = `Server error (${error.response.status}). Please try again.`;
-            } else if (error.message === 'Network Error') {
-              errorContent = 'Network error. Is the server running?';
-            } else if (error.message) {
-              errorContent = `Error: ${error.message}`;
-            }
-            
-            const errorMsg = {
-              role: 'bot',
-              content: errorContent,
-              timestamp: new Date()
-            };
-            setMessages(prev => [...prev, errorMsg]);
-            setAuthStep('password');
-          }
+          setMessages(prev => [...prev, errorMsg]);
+          setIsLoading(false);
+          return;
         }
-      } else {
-        // User is authenticated, send to Mistral bot
+
         try {
-          const response = await apiClient.post('/bots/mistral-id/chat', {
+          const loginResponse = await apiClient.post('/auth/login', {
+            email: `${username}@proof.local`,
+            password
+          });
+
+          const userData = {
+            username: loginResponse.data.user.username,
+            userId: loginResponse.data.user.id,
+            joined: new Date().toLocaleDateString()
+          };
+          const newToken = loginResponse.data.token;
+
+          setAuthUser(userData);
+          setToken(newToken);
+
+          const successMsg = {
+            role: 'bot',
+            content: `Welcome back, ${username}! 🎉 You're now logged in. You can now access communities, posts, and manage your account. Type /help for more commands.`,
+            timestamp: new Date()
+          };
+          setMessages(prev => [...prev, successMsg]);
+          setTimeout(() => navigate('/'), 2000);
+        } catch (error) {
+          const errorMsg = {
+            role: 'bot',
+            content: error.response?.data?.error || 'Login failed. Please check your credentials.',
+            timestamp: new Date()
+          };
+          setMessages(prev => [...prev, errorMsg]);
+        }
+      } else if (userInput.toLowerCase().startsWith('/register ')) {
+        const [_, username, password] = userInput.split(' ');
+        if (!username || !password) {
+          const errorMsg = {
+            role: 'bot',
+            content: 'Usage: /register username password',
+            timestamp: new Date()
+          };
+          setMessages(prev => [...prev, errorMsg]);
+          setIsLoading(false);
+          return;
+        }
+
+        try {
+          const registerResponse = await apiClient.post('/auth/register', {
+            username,
+            password,
+            email: `${username}@proof.local`
+          });
+
+          const userData = {
+            username: registerResponse.data.user.username,
+            userId: registerResponse.data.user.id,
+            joined: new Date().toLocaleDateString()
+          };
+          const newToken = registerResponse.data.token;
+
+          setAuthUser(userData);
+          setToken(newToken);
+
+          const successMsg = {
+            role: 'bot',
+            content: `Welcome to Proof, ${username}! 🚀 Your account has been created. You now have access to communities, posts, and social features. Type /help for more commands.`,
+            timestamp: new Date()
+          };
+          setMessages(prev => [...prev, successMsg]);
+          setTimeout(() => navigate('/'), 2000);
+        } catch (error) {
+          const errorMsg = {
+            role: 'bot',
+            content: error.response?.data?.error || 'Registration failed. Please try again.',
+            timestamp: new Date()
+          };
+          setMessages(prev => [...prev, errorMsg]);
+        }
+      } else if (userInput.toLowerCase() === '/help') {
+        const helpMsg = {
+          role: 'bot',
+          content: token 
+            ? 'Commands: /logout - Logout from your account\n\nYou can also access communities, posts, and manage your profile through the navigation menu.'
+            : 'Commands:\n/login username password - Login to your account\n/register username password - Create a new account\n\nOr just chat with me to prove you\'re human! 😊',
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, helpMsg]);
+      } else if (userInput.toLowerCase() === '/logout' && token) {
+        setAuthUser(null);
+        setToken(null);
+        const logoutMsg = {
+          role: 'bot',
+          content: 'You\'ve been logged out. Type /login or /register to continue.',
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, logoutMsg]);
+      } else {
+        // Send to Mistral bot for intelligent conversation
+        try {
+          // Get Mistral bot ID first
+          const botsResponse = await apiClient.get('/bots');
+          const mistralBot = botsResponse.data.bots.find(b => b.type === 'mistral');
+          
+          if (!mistralBot) {
+            throw new Error('Mistral bot not found');
+          }
+
+          const response = await apiClient.post(`/bots/${mistralBot.id}/chat`, {
             message: userInput
           });
-          
+
           const botMessage = {
             role: 'bot',
             content: response.data.message?.content || 'I understand. How can I help you further?',
@@ -131,6 +178,7 @@ const Chat = () => {
           };
           setMessages(prev => [...prev, botMessage]);
         } catch (error) {
+          console.error('Mistral error:', error);
           const errorMessage = {
             role: 'bot',
             content: 'Sorry, I encountered an error. Please try again.',
