@@ -90,7 +90,8 @@ services:
       - RASA_URL=http://rasa:5005
       - REDIS_URL=redis://redis:6379
       - API_URL=http://localhost:3001/api
-      - NODE_ENV=production
+      - NODE_ENV=development
+      - FRONTEND_URL=http://localhost:3000
       - JWT_SECRET=proof_jwt_secret_key_change_in_production
       - JWT_EXPIRY=7d
     depends_on:

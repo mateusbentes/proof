@@ -40,7 +40,10 @@ const io = new Server(server, {
 });
 const PORT = process.env.PORT || 3001;
 
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: false,
+  crossOriginOpenerPolicy: false
+}));
 app.use(morgan('combined'));
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' ? process.env.FRONTEND_URL : '*',

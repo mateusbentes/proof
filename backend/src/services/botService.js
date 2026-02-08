@@ -1,5 +1,6 @@
 const { query } = require('../db/connection');
 const { v4: uuidv4 } = require('uuid');
+const axios = require('axios');
 
 class BotService {
   // Get all active bots
@@ -79,36 +80,130 @@ class BotService {
     }
   }
 
-  // Mistral AI response
+  // Mistral AI response (via Ollama, with fallbacks)
   async getMistralResponse(bot, userMessage) {
     try {
-      // Check if Mistral API key is configured
-      if (!bot.config.api_key) {
-        return 'Mistral AI is not configured. Please add your API key.';
+      const ollamaUrl = process.env.OLLAMA_API_URL || 'http://localhost:11434/api';
+      const model = bot.config?.model || process.env.OLLAMA_MODEL || 'mistral';
+      const temperature = bot.config?.temperature || 0.7;
+
+      const response = await axios.post(
+        `${ollamaUrl}/generate`,
+        {
+          model,
+          prompt: userMessage,
+          temperature,
+          stream: false
+        },
+        {
+          timeout: 60000
+        }
+      );
+
+      if (response.data && response.data.response) {
+        return response.data.response.trim();
       }
 
-      // For now, return a placeholder
-      // In production, integrate with Mistral API
-      return `Mistral response to: "${userMessage}"`;
-    } catch (error) {
-      console.error('Mistral error:', error);
-      return 'Sorry, I encountered an error processing your request.';
+      return 'I received an empty response from Mistral. Please try again.';
+    } catch (ollamaError) {
+      // Try Rasa as first fallback
+      try {
+        return await this.getRasaResponse(userMessage);
+      } catch (rasaError) {
+        // Fall back to custom keyword-based responses
+        try {
+          return this.getCustomResponse({}, userMessage);
+        } catch (customError) {
+          // Final fallback
+          return 'Hello! How can I help you today?';
+        }
+      }
     }
   }
 
-  // OpenAI response
+  // Rasa response (fallback)
+  async getRasaResponse(userMessage) {
+    const rasaUrl = process.env.RASA_URL || 'http://localhost:5005';
+    
+    const response = await axios.post(
+      `${rasaUrl}/model/parse`,
+      {
+        text: userMessage
+      },
+      {
+        timeout: 30000
+      }
+    );
+
+    if (response.data && response.data.intent) {
+      // Return a response based on intent
+      const intent = response.data.intent.name;
+      const confidence = response.data.intent.confidence;
+
+      if (confidence > 0.5) {
+        // Use Rasa's understanding to generate a response
+        return `I understood you're asking about "${intent}". How can I help you with that?`;
+      }
+    }
+
+    // Fallback to custom response
+    return this.getCustomResponse({}, userMessage);
+  }
+
+  // OpenAI response (via Ollama if API key not configured)
   async getOpenAIResponse(bot, userMessage) {
     try {
-      if (!bot.config.api_key) {
-        return 'OpenAI is not configured. Please add your API key.';
+      // If no API key, fall back to Ollama
+      if (!bot.config || !bot.config.api_key) {
+        return await this.getMistralResponse(bot, userMessage);
       }
 
-      // For now, return a placeholder
-      // In production, integrate with OpenAI API
-      return `OpenAI response to: "${userMessage}"`;
+      const apiKey = bot.config.api_key;
+      const model = bot.config.model || 'gpt-3.5-turbo';
+      const temperature = bot.config.temperature || 0.7;
+      const maxTokens = bot.config.max_tokens || 1024;
+
+      const response = await axios.post(
+        'https://api.openai.com/v1/chat/completions',
+        {
+          model,
+          messages: [
+            {
+              role: 'user',
+              content: userMessage
+            }
+          ],
+          temperature,
+          max_tokens: maxTokens
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json'
+          },
+          timeout: 30000
+        }
+      );
+
+      if (response.data && response.data.choices && response.data.choices.length > 0) {
+        return response.data.choices[0].message.content;
+      }
+
+      return 'I received an empty response from OpenAI. Please try again.';
     } catch (error) {
-      console.error('OpenAI error:', error);
-      return 'Sorry, I encountered an error processing your request.';
+      console.error('OpenAI error:', error.message);
+      
+      if (error.response?.status === 401) {
+        return 'OpenAI API key is invalid. Please check your configuration.';
+      }
+      if (error.response?.status === 429) {
+        return 'OpenAI API rate limit exceeded. Please try again later.';
+      }
+      if (error.code === 'ECONNABORTED') {
+        return 'Request to OpenAI timed out. Please try again.';
+      }
+      
+      return 'Sorry, I encountered an error processing your request. Please try again later.';
     }
   }
 

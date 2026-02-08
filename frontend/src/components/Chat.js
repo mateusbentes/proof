@@ -50,11 +50,14 @@ const Chat = () => {
     try {
       // Check for special commands
       if (userInput.toLowerCase().startsWith('/login ')) {
-        const [_, username, password] = userInput.split(' ');
-        if (!username || !password) {
+        const parts = userInput.substring('/login '.length).split(' ');
+        const email = parts[0];
+        const password = parts.slice(1).join(' ');
+        
+        if (!email || !password) {
           const errorMsg = {
             role: 'bot',
-            content: 'Usage: /login username password',
+            content: 'Usage: /login email password',
             timestamp: new Date()
           };
           setMessages(prev => [...prev, errorMsg]);
@@ -64,7 +67,7 @@ const Chat = () => {
 
         try {
           const loginResponse = await apiClient.post('/auth/login', {
-            email: `${username}@proof.local`,
+            email,
             password
           });
 
@@ -80,11 +83,11 @@ const Chat = () => {
 
           const successMsg = {
             role: 'bot',
-            content: `Welcome back, ${username}! 🎉 You're now logged in. You can now access communities, posts, and manage your account. Type /help for more commands.`,
+            content: `Welcome back, ${userData.username}! 🎉 You're now logged in. Redirecting to home...`,
             timestamp: new Date()
           };
           setMessages(prev => [...prev, successMsg]);
-          setTimeout(() => navigate('/'), 2000);
+          setTimeout(() => window.location.href = '/', 1500);
         } catch (error) {
           const errorMsg = {
             role: 'bot',
@@ -92,13 +95,18 @@ const Chat = () => {
             timestamp: new Date()
           };
           setMessages(prev => [...prev, errorMsg]);
+          setIsLoading(false);
         }
       } else if (userInput.toLowerCase().startsWith('/register ')) {
-        const [_, username, password] = userInput.split(' ');
-        if (!username || !password) {
+        const parts = userInput.substring('/register '.length).split(' ');
+        const username = parts[0];
+        const email = parts[1];
+        const password = parts.slice(2).join(' ');
+        
+        if (!username || !email || !password) {
           const errorMsg = {
             role: 'bot',
-            content: 'Usage: /register username password',
+            content: 'Usage: /register username email password',
             timestamp: new Date()
           };
           setMessages(prev => [...prev, errorMsg]);
@@ -109,8 +117,8 @@ const Chat = () => {
         try {
           const registerResponse = await apiClient.post('/auth/register', {
             username,
-            password,
-            email: `${username}@proof.local`
+            email,
+            password
           });
 
           const userData = {
@@ -125,11 +133,11 @@ const Chat = () => {
 
           const successMsg = {
             role: 'bot',
-            content: `Welcome to Proof, ${username}! 🚀 Your account has been created. You now have access to communities, posts, and social features. Type /help for more commands.`,
+            content: `Welcome to Proof, ${userData.username}! 🚀 Your account has been created. Redirecting to home...`,
             timestamp: new Date()
           };
           setMessages(prev => [...prev, successMsg]);
-          setTimeout(() => navigate('/'), 2000);
+          setTimeout(() => window.location.href = '/', 1500);
         } catch (error) {
           const errorMsg = {
             role: 'bot',
@@ -137,6 +145,7 @@ const Chat = () => {
             timestamp: new Date()
           };
           setMessages(prev => [...prev, errorMsg]);
+          setIsLoading(false);
         }
       } else if (userInput.toLowerCase() === '/help') {
         const helpMsg = {
@@ -184,17 +193,33 @@ const Chat = () => {
           setMessages(prev => [...prev, botMessage]);
         } catch (error) {
           console.error('Mistral error:', error);
+          console.error('Error response:', error.response?.data);
+          console.error('Error status:', error.response?.status);
+          console.error('Error message:', error.message);
+          
+          // Provide more detailed error message
+          let errorContent = 'Sorry, I encountered an error. Please try again.';
+          if (error.response?.status === 404) {
+            errorContent = 'Bot service is temporarily unavailable. Please try again.';
+          } else if (error.message === 'Mistral bot not found') {
+            errorContent = 'Mistral bot is not configured. Please contact support.';
+          } else if (error.response?.data?.error) {
+            errorContent = error.response.data.error;
+          }
+          
           const errorMessage = {
             role: 'bot',
-            content: 'Sorry, I encountered an error. Please try again.',
+            content: errorContent,
             timestamp: new Date()
           };
           setMessages(prev => [...prev, errorMessage]);
+          setIsLoading(false);
         }
       }
     } catch (error) {
       const errorMessage = { role: 'bot', content: 'Sorry, something went wrong. Please try again.', timestamp: new Date() };
       setMessages(prev => [...prev, errorMessage]);
+      setIsLoading(false);
     } finally {
       setIsLoading(false);
     }

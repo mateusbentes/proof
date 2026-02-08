@@ -49,9 +49,9 @@ VALUES
   (
     'Mistral',
     'mistral',
-    'Mistral AI - Open source language model',
+    'Mistral AI - Open source language model (via Ollama)',
     '🤖',
-    '{"model": "mistral-7b", "temperature": 0.7, "max_tokens": 1024}',
+    '{"model": "neural-chat", "temperature": 0.7}',
     true
   )
 ON CONFLICT (name) DO NOTHING;

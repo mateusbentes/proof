@@ -12,10 +12,23 @@ import { useAuthStore } from './store/authStore';
 import './App.css';
 
 function App() {
-  const { token, user } = useAuthStore();
+  const token = useAuthStore((state) => state.token);
+  const user = useAuthStore((state) => state.user);
   const [showSidebar, setShowSidebar] = useState(false);
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    // Ensure auth state is loaded from localStorage on mount
+    const storedToken = localStorage.getItem('token');
+    const storedUser = localStorage.getItem('user');
+    setIsReady(true);
+  }, []);
 
   const isAuthenticated = !!token && !!user;
+
+  if (!isReady) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <Router>
